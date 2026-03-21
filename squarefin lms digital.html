@@ -1,0 +1,2552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SquareFin LMS</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f0f4f8;
+  --bg2: #ffffff;
+  --bg3: #f5f7fa;
+  --card: #ffffff;
+  --card2: #f8fafc;
+  --border: #e2e8f0;
+  --border2: #cbd5e1;
+  --accent: #0284c7;
+  --accent2: #7c3aed;
+  --accent3: #10b981;
+  --accent4: #f59e0b;
+  --accent5: #ef4444;
+  --text: #0f172a;
+  --text2: #475569;
+  --text3: #94a3b8;
+  --gold: #fbbf24;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow2: 0 4px 24px rgba(0,0,0,0.12);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+
+/* SIDEBAR */
+.sidebar {
+  position:fixed; left:0; top:0; width:240px; height:100vh;
+  background:var(--bg2); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; z-index:100;
+  padding:0 0 20px 0;
+}
+.logo {
+  padding:24px 20px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:12px;
+}
+.logo-icon {
+  width:38px; height:38px; background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:10px; display:flex; align-items:center; justify-content:center;
+  font-size:18px; font-weight:800; color:#fff;
+}
+.logo-text { font-size:18px; font-weight:800; }
+.logo-text span { color:var(--accent); }
+.logo-sub { font-size:10px; color:var(--text3); font-weight:500; letter-spacing:1px; text-transform:uppercase; }
+
+.nav { padding:16px 12px; flex:1; overflow-y:auto; }
+.nav-section { font-size:10px; color:var(--text3); font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:8px 8px 6px; }
+.nav-item {
+  display:flex; align-items:center; gap:10px; padding:10px 12px;
+  border-radius:10px; cursor:pointer; margin-bottom:2px;
+  font-size:13.5px; font-weight:500; color:var(--text2);
+  transition:all 0.2s; position:relative;
+}
+.nav-item:hover { background:var(--card); color:var(--text); }
+.nav-item.active { background:linear-gradient(135deg,rgba(0,212,255,0.15),rgba(124,58,237,0.1)); color:var(--accent); }
+.nav-item.active::before {
+  content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
+  width:3px; height:60%; background:var(--accent); border-radius:0 2px 2px 0;
+}
+.nav-item .icon { width:20px; text-align:center; font-size:15px; }
+.nav-badge {
+  margin-left:auto; background:var(--accent5); color:#fff;
+  font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px;
+}
+
+.sidebar-footer { padding:12px 12px 0; border-top:1px solid var(--border); }
+.user-chip {
+  display:flex; align-items:center; gap:10px; padding:10px 12px;
+  background:var(--card); border-radius:10px;
+}
+.user-avatar {
+  width:32px; height:32px; background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:700; color:#fff;
+}
+.user-name { font-size:13px; font-weight:600; }
+.user-role { font-size:11px; color:var(--text3); }
+
+/* MAIN */
+.main { margin-left:240px; min-height:100vh; }
+.topbar {
+  position:sticky; top:0; z-index:90;
+  background:rgba(10,13,20,0.9); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:14px 28px; display:flex; align-items:center; justify-content:space-between;
+}
+.page-title { font-size:20px; font-weight:800; }
+.page-title span { color:var(--accent); }
+.topbar-actions { display:flex; align-items:center; gap:12px; }
+.date-chip {
+  background:var(--card); border:1px solid var(--border);
+  padding:7px 14px; border-radius:20px; font-size:12px; color:var(--text2);
+  font-family:monospace,monospace;
+}
+
+.content { padding:24px 28px; }
+
+/* CARDS */
+.grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+.grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+
+.stat-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:16px; padding:20px; position:relative; overflow:hidden;
+  transition:transform 0.2s, box-shadow 0.2s;
+}
+.stat-card:hover { transform:translateY(-2px); box-shadow:var(--shadow2); }
+.stat-card::before {
+  content:''; position:absolute; top:0; right:0;
+  width:80px; height:80px; border-radius:50%;
+  opacity:0.07; transform:translate(20px,-20px);
+}
+.stat-card.blue::before { background:var(--accent); }
+.stat-card.purple::before { background:var(--accent2); }
+.stat-card.green::before { background:var(--accent3); }
+.stat-card.amber::before { background:var(--accent4); }
+.stat-card.red::before { background:var(--accent5); }
+
+.stat-label { font-size:11.5px; color:var(--text3); font-weight:600; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px; }
+.stat-value { font-size:32px; font-weight:800; line-height:1; margin-bottom:6px; font-family:monospace,monospace; }
+.stat-value.blue { color:var(--accent); }
+.stat-value.purple { color:var(--accent2); }
+.stat-value.green { color:var(--accent3); }
+.stat-value.amber { color:var(--accent4); }
+.stat-value.red { color:var(--accent5); }
+.stat-trend { font-size:12px; display:flex; align-items:center; gap:4px; }
+.trend-up { color:var(--accent3); }
+.trend-down { color:var(--accent5); }
+
+/* PANEL */
+.panel {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:16px; overflow:hidden; margin-bottom:24px;
+}
+.panel-header {
+  padding:16px 20px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.panel-title { font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.panel-body { padding:20px; }
+
+/* BUTTONS */
+.btn {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:8px 16px; border-radius:10px; font-size:13px; font-weight:600;
+  cursor:pointer; border:none; transition:all 0.2s; font-family:inherit;
+}
+.btn-primary { background:linear-gradient(135deg,var(--accent),#0095cc); color:#000; }
+.btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,212,255,0.3); }
+.btn-ghost { background:var(--card2); color:var(--text2); border:1px solid var(--border); }
+.btn-ghost:hover { color:var(--text); border-color:var(--border2); }
+.btn-success { background:rgba(16,185,129,0.15); color:var(--accent3); border:1px solid rgba(16,185,129,0.3); }
+.btn-danger { background:rgba(239,68,68,0.15); color:var(--accent5); border:1px solid rgba(239,68,68,0.3); }
+.btn-sm { padding:5px 12px; font-size:12px; }
+
+/* TABLE */
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th {
+  text-align:left; padding:10px 14px; font-size:11px; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.8px; color:var(--text3);
+  background:var(--bg3); border-bottom:1px solid var(--border);
+}
+td { padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:middle; }
+tr:hover td { background:rgba(255,255,255,0.02); }
+tr:last-child td { border-bottom:none; }
+
+/* BADGES */
+.badge {
+  display:inline-flex; align-items:center; padding:3px 10px;
+  border-radius:20px; font-size:11px; font-weight:700; gap:4px;
+}
+.badge-green { background:rgba(16,185,129,0.15); color:var(--accent3); }
+.badge-red { background:rgba(239,68,68,0.15); color:var(--accent5); }
+.badge-amber { background:rgba(245,158,11,0.15); color:var(--accent4); }
+.badge-blue { background:rgba(0,212,255,0.15); color:var(--accent); }
+.badge-purple { background:rgba(124,58,237,0.15); color:var(--accent2); }
+.badge-orange { background:rgba(249,115,22,0.15); color:#ea580c; }
+.badge-gray { background:rgba(148,163,184,0.12); color:var(--text2); }
+
+/* FORMS */
+input, select, textarea {
+  background:var(--bg3); border:1px solid var(--border); color:var(--text);
+  border-radius:10px; padding:9px 14px; font-size:13px; font-family:inherit;
+  outline:none; transition:border-color 0.2s; width:100%;
+}
+input:focus, select:focus, textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,212,255,0.1); }
+select option { background:var(--bg3); }
+label { font-size:12px; font-weight:600; color:var(--text2); display:block; margin-bottom:6px; }
+.form-group { margin-bottom:16px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+/* AVATAR */
+.avatar {
+  width:36px; height:36px; border-radius:50%; display:flex;
+  align-items:center; justify-content:center; font-weight:700; font-size:13px;
+  flex-shrink:0;
+}
+
+/* PAGES */
+.page { display:none; }
+.page.active { display:block; }
+
+/* PROGRESS BAR */
+.progress-bar { height:6px; background:var(--bg3); border-radius:3px; overflow:hidden; }
+.progress-fill { height:100%; border-radius:3px; transition:width 0.5s; }
+
+/* MEMBER CARD */
+.member-card {
+  background:var(--card2); border:1px solid var(--border);
+  border-radius:14px; padding:16px; display:flex;
+  align-items:center; gap:14px; transition:all 0.2s;
+}
+.member-card:hover { border-color:var(--border2); transform:translateY(-1px); }
+.member-info { flex:1; }
+.member-name { font-size:14px; font-weight:700; margin-bottom:2px; }
+.member-stats { font-size:11px; color:var(--text3); }
+
+/* UPLOAD ZONE */
+.upload-zone {
+  border:2px dashed var(--border); border-radius:16px;
+  padding:40px; text-align:center; cursor:pointer;
+  transition:all 0.2s;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color:var(--accent); background:rgba(0,212,255,0.05);
+}
+.upload-icon { font-size:48px; margin-bottom:12px; }
+
+/* MODAL */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000;
+  display:none; align-items:center; justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.modal-overlay.open { display:flex; }
+.modal {
+  background:var(--card); border:1px solid var(--border2);
+  border-radius:20px; padding:28px; width:90%; max-width:520px;
+  max-height:90vh; overflow-y:auto;
+  animation:slideUp 0.3s ease;
+}
+@keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+.modal-title { font-size:18px; font-weight:800; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; }
+
+/* TOAST */
+.toast-container { position:fixed; top:20px; right:20px; z-index:2000; display:flex; flex-direction:column; gap:8px; }
+.toast {
+  background:var(--card); border:1px solid var(--border2);
+  border-radius:12px; padding:12px 16px; font-size:13px; font-weight:600;
+  display:flex; align-items:center; gap:10px; min-width:260px;
+  animation:toastIn 0.3s ease; box-shadow:var(--shadow2);
+}
+@keyframes toastIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+.toast.success { border-left:3px solid var(--accent3); }
+.toast.error { border-left:3px solid var(--accent5); }
+.toast.info { border-left:3px solid var(--accent); }
+
+/* CHART CONTAINER */
+.chart-container { position:relative; width:100%; }
+
+/* TABS */
+.tabs { display:flex; gap:4px; background:var(--bg3); padding:4px; border-radius:12px; margin-bottom:20px; }
+.tab { flex:1; padding:8px 16px; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; text-align:center; color:var(--text3); transition:all 0.2s; border:none; background:none; font-family:inherit; }
+.tab.active { background:var(--card); color:var(--text); box-shadow:var(--shadow); }
+
+/* METRIC ROW */
+.metric-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); }
+.metric-row:last-child { border-bottom:none; }
+
+/* PRODUCT TAG */
+.product-tag { font-size:11px; font-weight:700; padding:3px 8px; border-radius:6px; }
+.tag-cc { background:rgba(0,212,255,0.15); color:var(--accent); }
+.tag-loan { background:rgba(124,58,237,0.15); color:var(--accent2); }
+.tag-partner { background:rgba(16,185,129,0.15); color:var(--accent3); }
+.tag-mf { background:rgba(245,158,11,0.15); color:var(--accent4); }
+
+/* EMPTY STATE */
+.empty-state { text-align:center; padding:48px; color:var(--text3); }
+.empty-state .empty-icon { font-size:48px; margin-bottom:12px; }
+.empty-state p { font-size:14px; }
+
+/* RESPONSIVE */
+@media(max-width:768px) {
+  .sidebar { width:200px; }
+  .main { margin-left:200px; }
+  .grid-4 { grid-template-columns:1fr 1fr; }
+  .grid-3 { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- MODAL: Add Lead -->
+<div class="modal-overlay" id="addLeadModal">
+  <div class="modal">
+    <div class="modal-title">
+      ➕ New Lead Entry
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('addLeadModal')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Lead Name *</label>
+        <input type="text" id="leadName" placeholder="Customer name">
+      </div>
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="text" id="leadPhone" placeholder="10-digit number">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Product *</label>
+        <select id="leadProduct">
+          <option value="">Select Product</option>
+          <option value="credit_card">💳 Credit Card</option>
+          <option value="loan">🏦 Loans (Auto/Tractor/Personal)</option>
+          <option value="partner">🤝 Become Partner in SquareFin</option>
+          <option value="mutual_fund">📈 Mutual Fund Distributor</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Assigned To *</label>
+        <select id="leadAssigned">
+          <option value="">Select Member</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Lead Source</label>
+        <select id="leadSource">
+          <option value="facebook">Facebook</option>
+          <option value="instagram">Instagram</option>
+          <option value="google">Google Ads</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="referral">Referral</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="leadDate">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Status *</label>
+      <select id="leadStatus">
+        <option value="pending">⏳ Pending</option>
+        <option value="new">🆕 New</option>
+        <option value="called">📞 Called</option>
+        <option value="interested">✅ Interested</option>
+        <option value="not_interested">❌ Not Interested</option>
+        <option value="follow_up">🔁 Follow Up</option>
+        <option value="converted">🎯 Converted</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Follow-up Date</label>
+      <input type="date" id="leadFollowup">
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="leadNotes" rows="2" placeholder="Any remarks..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeModal('addLeadModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLead()">💾 Save Lead</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Add Member -->
+<div class="modal-overlay" id="addMemberModal">
+  <div class="modal">
+    <div class="modal-title">
+      👤 Add Team Member
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('addMemberModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Full Name *</label>
+      <input type="text" id="newMemberName" placeholder="Enter name">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Role</label>
+        <select id="newMemberRole">
+          <option value="Telecaller">Telecaller</option>
+          <option value="Team Lead">Team Lead</option>
+          <option value="Senior Executive">Senior Executive</option>
+          <option value="Executive">Executive</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Join Date</label>
+        <input type="date" id="newMemberDate">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeModal('addMemberModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addMember()">✅ Add Member</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Edit Lead -->
+<div class="modal-overlay" id="editLeadModal">
+  <div class="modal">
+    <div class="modal-title">
+      ✏️ Edit Lead
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('editLeadModal')">✕</button>
+    </div>
+    <input type="hidden" id="editLeadIdx">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Lead Name</label>
+        <input type="text" id="editLeadName">
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="text" id="editLeadPhone">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Product</label>
+        <select id="editLeadProduct">
+          <option value="credit_card">💳 Credit Card</option>
+          <option value="loan">🏦 Loans</option>
+          <option value="partner">🤝 Become Partner</option>
+          <option value="mutual_fund">📈 Mutual Fund</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Assigned To</label>
+        <select id="editLeadAssigned"></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Status</label>
+        <select id="editLeadStatus">
+          <option value="pending">⏳ Pending</option>
+          <option value="new">🆕 New</option>
+          <option value="called">📞 Called</option>
+          <option value="interested">✅ Interested</option>
+          <option value="not_interested">❌ Not Interested</option>
+          <option value="follow_up">🔁 Follow Up</option>
+          <option value="converted">🎯 Converted</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Follow-up Date</label>
+        <input type="date" id="editLeadFollowup">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="editLeadNotes" rows="2"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeModal('editLeadModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="updateLead()">💾 Update</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Lead Detail -->
+<div class="modal-overlay" id="leadDetailModal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-title">
+      📋 Lead Details
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('leadDetailModal')">✕</button>
+    </div>
+    <div id="leadDetailBody"></div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">SF</div>
+    <div>
+      <div class="logo-text">Square<span>Fin</span></div>
+      <div class="logo-sub">LMS Platform</div>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Main</div>
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <span class="icon">📊</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('leads')">
+      <span class="icon">🎯</span> Lead Tracker
+      <span class="nav-badge" id="newLeadBadge">0</span>
+    </div>
+    <div class="nav-item" onclick="showPage('upload')">
+      <span class="icon">📤</span> Excel Import
+    </div>
+    <div class="nav-section">Team</div>
+    <div class="nav-item" onclick="showPage('team')">
+      <span class="icon">👥</span> Team Members
+    </div>
+    <div class="nav-item" onclick="showPage('performance')">
+      <span class="icon">📈</span> Performance
+    </div>
+    <div class="nav-section">Reports</div>
+    <div class="nav-item" onclick="showPage('reports')">
+      <span class="icon">📋</span> Daily Report
+    </div>
+    <div class="nav-item" onclick="showPage('importreport')">
+      <span class="icon">📥</span> Import Report
+      <span class="nav-badge" id="importReportBadge" style="background:var(--accent2);display:none;">!</span>
+    </div>
+    <div class="nav-section">Tools</div>
+    <div class="nav-item" onclick="showPage('docs')">
+      <span class="icon">📄</span> Documentation
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="user-avatar">A</div>
+      <div>
+        <div class="user-name">Admin</div>
+        <div class="user-role">SquareFin Manager</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="pageTitle">📊 <span>Dashboard</span></div>
+    <div class="topbar-actions">
+      <div class="date-chip" id="currentDate"></div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('addLeadModal')">+ Add Lead</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div id="page-dashboard" class="page active">
+
+      <!-- Quick Filter Shortcut Buttons -->
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+        <button onclick="goToLeadsFilter('assigned')" style="display:flex;align-items:center;gap:10px;background:#fff;border:2px solid #0284c7;border-radius:14px;padding:14px 22px;cursor:pointer;font-family:inherit;transition:all 0.2s;flex:1;min-width:200px;" onmouseover="this.style.background='#0284c720'" onmouseout="this.style.background='#fff'">
+          <span style="font-size:28px;">📋</span>
+          <div style="text-align:left;">
+            <div style="font-size:13px;font-weight:800;color:#0284c7;">ASSIGNED LEADS</div>
+            <div style="font-size:11px;color:#475569;" id="dashAssignedCount">Loading...</div>
+          </div>
+          <span style="margin-left:auto;font-size:22px;font-weight:800;color:#0284c7;" id="dashAssignedNum">—</span>
+        </button>
+        <button onclick="goToLeadsFilter('pending')" style="display:flex;align-items:center;gap:10px;background:#fff;border:2px solid #ea580c;border-radius:14px;padding:14px 22px;cursor:pointer;font-family:inherit;transition:all 0.2s;flex:1;min-width:200px;" onmouseover="this.style.background='#ea580c15'" onmouseout="this.style.background='#fff'">
+          <span style="font-size:28px;">⏳</span>
+          <div style="text-align:left;">
+            <div style="font-size:13px;font-weight:800;color:#ea580c;">PENDING LEADS</div>
+            <div style="font-size:11px;color:#475569;" id="dashPendingCount">Call nahi hua abhi tak</div>
+          </div>
+          <span style="margin-left:auto;font-size:22px;font-weight:800;color:#ea580c;" id="dashPendingNum">—</span>
+        </button>
+      </div>
+
+      <div class="grid-4" id="dashStats"></div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">📊 Leads by Product</div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-container" style="height:220px">
+              <canvas id="productChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">🎯 Status Distribution</div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-container" style="height:220px">
+              <canvas id="statusChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">👥 Team Overview — Today</div>
+          <button class="btn btn-ghost btn-sm" onclick="showPage('performance')">View All →</button>
+        </div>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table id="teamOverviewTable">
+              <thead>
+                <tr>
+                  <th>Member</th>
+                  <th>Total Leads</th>
+                  <th>⏳ Pending</th>
+                  <th>Calls Done</th>
+                  <th>Interested</th>
+                  <th>Not Interested</th>
+                  <th>Converted</th>
+                  <th>Conversion %</th>
+                  <th>Trend</th>
+                </tr>
+              </thead>
+              <tbody id="teamOverviewBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">🔁 Today's Follow-ups</div>
+        </div>
+        <div class="panel-body" id="followupList"></div>
+      </div>
+    </div>
+
+    <!-- ===== LEADS ===== -->
+    <div id="page-leads" class="page">
+
+      <!-- TOP QUICK FILTER BUTTONS -->
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+        <button onclick="goToLeadsFilter('assigned')" id="btnAssignedFilter"
+          style="display:flex;align-items:center;gap:8px;background:#fff;border:2px solid #0284c7;border-radius:12px;padding:10px 18px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:#0284c7;transition:all 0.2s;">
+          📋 Assigned Leads <span id="ltAssignedNum" style="background:#0284c720;padding:2px 10px;border-radius:20px;font-size:13px;">—</span>
+        </button>
+        <button onclick="goToLeadsFilter('pending')" id="btnPendingFilter"
+          style="display:flex;align-items:center;gap:8px;background:#fff;border:2px solid #ea580c;border-radius:12px;padding:10px 18px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:#ea580c;transition:all 0.2s;">
+          ⏳ Pending (Call Baaki) <span id="ltPendingNum" style="background:#ea580c15;padding:2px 10px;border-radius:20px;font-size:13px;">—</span>
+        </button>
+        <button onclick="clearLeadFilters()"
+          style="display:flex;align-items:center;gap:6px;background:#fff;border:2px solid var(--border);border-radius:12px;padding:10px 16px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:var(--text2);transition:all 0.2s;">
+          👁️ All Leads
+        </button>
+      </div>
+
+      <!-- Employee-wise lead count cards -->
+      <div id="employeeLeadCards" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;"></div>
+
+      <!-- Filters -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:16px;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text3);display:block;margin-bottom:5px;">SEARCH</label>
+            <input type="text" id="leadSearch" placeholder="Name ya phone..." style="width:190px;" onkeydown="if(event.key==='Enter') applyLeadFilters()">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text3);display:block;margin-bottom:5px;">PRODUCT</label>
+            <select id="filterProduct" style="width:155px;">
+              <option value="">All Products</option>
+              <option value="credit_card">💳 Credit Card</option>
+              <option value="loan">🏦 Loans</option>
+              <option value="partner">🤝 Become Partner</option>
+              <option value="mutual_fund">📈 Mutual Fund</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text3);display:block;margin-bottom:5px;">STATUS</label>
+            <select id="filterStatus" style="width:155px;">
+              <option value="">All Status</option>
+              <option value="pending">⏳ Pending</option>
+              <option value="new">🆕 New</option>
+              <option value="called">📞 Called</option>
+              <option value="interested">✅ Interested</option>
+              <option value="not_interested">❌ Not Interested</option>
+              <option value="follow_up">🔁 Follow Up</option>
+              <option value="converted">🎯 Converted</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text3);display:block;margin-bottom:5px;">TEAM MEMBER</label>
+            <select id="filterMember" style="width:150px;">
+              <option value="">All Members</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text3);display:block;margin-bottom:5px;">DATE</label>
+            <select id="filterDate" style="width:130px;">
+              <option value="all">All Time</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-end;">
+            <button class="btn btn-primary" onclick="applyLeadFilters()" style="height:38px;padding:0 20px;">🔍 Search</button>
+            <button class="btn btn-ghost" onclick="clearLeadFilters()" style="height:38px;">✕ Clear</button>
+            <button class="btn btn-ghost" onclick="exportLeadsCSV()" style="height:38px;">📥 Export Excel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bulk action bar (shown when leads selected) -->
+      <div id="bulkBar" style="display:none;background:var(--accent);color:#fff;border-radius:12px;padding:10px 16px;margin-bottom:12px;align-items:center;gap:12px;">
+        <span id="bulkCount" style="font-weight:700;font-size:13px;"></span>
+        <button class="btn btn-sm" onclick="bulkDeleteLeads()" style="background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.4);">🗑️ Delete Selected</button>
+        <button class="btn btn-sm" onclick="deselectAllLeadRows()" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.3);">✕ Deselect All</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">🎯 Lead Tracker <span id="leadCount" style="color:var(--text3);font-weight:400;font-size:13px;"></span></div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-ghost btn-sm" onclick="showPendingOnly()" style="color:#ea580c;border-color:#ea580c20;background:#ea580c10;">⏳ Pending</button>
+            <button class="btn btn-primary btn-sm" onclick="openModal('addLeadModal')">+ Add Lead</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:36px;"><input type="checkbox" id="selectAllLeads" style="width:auto;cursor:pointer;" onchange="toggleSelectAllLeads(this.checked)" title="Select All"></th>
+                <th>#</th>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Product</th>
+                <th>Assigned To</th>
+                <th>Status</th>
+                <th>Follow-up</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="leadsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== IMPORT LEADS ===== -->
+    <div id="page-upload" class="page">
+      <!-- Step 1: Upload -->
+      <div id="upStep1">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">📥 Import Leads from Excel</div>
+          </div>
+          <div class="panel-body">
+            <div style="background:var(--bg3);border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:13px;color:var(--text2);">
+              Your Excel can have any column names — we will show you the file and you pick which column is <strong>Name</strong> and which is <strong>Phone</strong>. That's it.
+            </div>
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+              <div class="upload-icon">📊</div>
+              <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Click to Upload Excel / Drop here</div>
+              <div style="font-size:13px;color:var(--text3);">.xlsx or .xls</div>
+            </div>
+            <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="handleFileUpload(event)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Pick Name + Phone column -->
+      <div id="upStep2" style="display:none;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <button class="btn btn-ghost btn-sm" onclick="resetUpload()">← Back</button>
+          <div>
+            <div style="font-size:15px;font-weight:800;" id="upFileName"></div>
+            <div style="font-size:12px;color:var(--text3);" id="upRowCount"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">📌 Which column is Name and Phone?</div>
+          </div>
+          <div class="panel-body">
+            <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:20px;">
+              <div style="flex:1;min-width:200px;">
+                <label style="font-weight:700;color:var(--accent5);">★ Customer Name column</label>
+                <select id="up_name" style="margin-top:6px;font-size:13px;"></select>
+              </div>
+              <div style="flex:1;min-width:200px;">
+                <label style="font-weight:700;color:var(--accent5);">★ Phone / Mobile column</label>
+                <select id="up_phone" style="margin-top:6px;font-size:13px;"></select>
+              </div>
+            </div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:8px;font-weight:600;">PREVIEW — first 5 rows of selected columns:</div>
+            <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border);margin-bottom:20px;min-height:60px;">
+              <table id="upPreview" style="font-size:12px;border-collapse:collapse;width:100%;"></table>
+            </div>
+            <div style="display:flex;justify-content:flex-end;">
+              <button class="btn btn-primary" onclick="loadPendingLeads()" style="padding:10px 28px;">Next → Assign Leads</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Assign product + member -->
+      <div id="upStep3" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="btn btn-ghost btn-sm" onclick="goToUpStep2()">← Back</button>
+            <div>
+              <div style="font-size:15px;font-weight:800;" id="upStep3Count"></div>
+              <div style="font-size:12px;color:var(--text3);">Assign product & member, then import</div>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="doImport()" style="padding:10px 24px;font-size:14px;">✅ Import to Lead Tracker</button>
+        </div>
+
+        <!-- Buckets -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;" id="upBuckets"></div>
+
+        <!-- Bulk assign -->
+        <div class="panel" style="margin-bottom:16px;">
+          <div class="panel-body" style="padding:10px 14px;">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <span style="font-size:13px;font-weight:700;">Bulk Assign:</span>
+              <select id="upBulkProd" style="width:160px;font-size:12px;">
+                <option value="">Select Product</option>
+                <option value="credit_card">💳 Credit Card</option>
+                <option value="loan">🏦 Loans</option>
+                <option value="partner">🤝 Become Partner</option>
+                <option value="mutual_fund">📈 Mutual Fund</option>
+              </select>
+              <select id="upBulkMem" style="width:150px;font-size:12px;"></select>
+              <button class="btn btn-ghost btn-sm" onclick="bulkApply()">Apply to Selected</button>
+              <button class="btn btn-ghost btn-sm" onclick="upSelectAll()">All</button>
+              <button class="btn btn-ghost btn-sm" onclick="upDeselectAll()">None</button>
+              <span id="upUnassigned" style="margin-left:auto;font-size:12px;font-weight:700;color:var(--accent5);"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="panel">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:32px;"><input type="checkbox" id="upChkAll" style="width:auto;" onchange="upToggleAll(this.checked)"></th>
+                  <th>#</th><th>Name</th><th>Phone</th><th>Product</th><th>Assign To</th>
+                </tr>
+              </thead>
+              <tbody id="upTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Member summary -->
+        <div class="panel" style="margin-top:16px;">
+          <div class="panel-header"><div class="panel-title">👥 Member-wise Assignment</div></div>
+          <div class="panel-body" id="upMemberSummary" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TEAM ===== -->
+    <!-- ===== TEAM ===== -->
+    <div id="page-team" class="page">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div style="font-size:15px;font-weight:600;color:var(--text2);">Manage your digital sales team</div>
+        <button class="btn btn-primary" onclick="openAddMemberModal()">+ Add Member</button>
+      </div>
+      <div id="memberGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;"></div>
+    </div>
+
+    <!-- ===== PERFORMANCE ===== -->
+    <div id="page-performance" class="page">
+      <div class="tabs" id="perfTabs">
+        <button class="tab active" onclick="showPerfTab('individual')">👤 Individual</button>
+        <button class="tab" onclick="showPerfTab('product')">📦 By Product</button>
+        <button class="tab" onclick="showPerfTab('trend')">📈 Trends</button>
+      </div>
+      <div id="perf-individual">
+        <div id="memberPerfCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;"></div>
+      </div>
+      <div id="perf-product" style="display:none;">
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">📦 Product-wise Leads</div></div>
+            <div class="panel-body">
+              <div class="chart-container" style="height:280px"><canvas id="productPerfChart"></canvas></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">🎯 Conversion by Product</div></div>
+            <div class="panel-body" id="productConvList"></div>
+          </div>
+        </div>
+      </div>
+      <div id="perf-trend" style="display:none;">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">📈 Weekly Lead Trend</div></div>
+          <div class="panel-body">
+            <div class="chart-container" style="height:300px"><canvas id="trendChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== REPORTS ===== -->
+    <div id="page-reports" class="page">
+      <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center;flex-wrap:wrap;">
+        <div>
+          <label style="margin-bottom:4px;">Report Date</label>
+          <input type="date" id="reportDate" style="width:180px;" onchange="renderReport()">
+        </div>
+        <div style="margin-top:18px;">
+          <button class="btn btn-ghost btn-sm" onclick="exportReport()">📥 Export Report</button>
+        </div>
+      </div>
+      <div class="grid-4" id="reportStats"></div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">📋 Daily Lead Report</div>
+        </div>
+        <div class="panel-body" id="reportBody"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">👥 Member-wise Summary</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Leads Assigned</th>
+                <th>Calls Done</th>
+                <th>Interested</th>
+                <th>Not Interested</th>
+                <th>Follow Up</th>
+                <th>Converted</th>
+                <th>Conv. Rate</th>
+              </tr>
+            </thead>
+            <tbody id="reportMemberBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ===== DOCS ===== -->
+    <div id="page-docs" class="page">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+        <div style="font-size:14px;color:var(--text2);">Configure required documents per product. Track document status for each lead.</div>
+        <button class="btn btn-primary" onclick="saveDocConfig()">💾 Save Config</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-bottom:28px;" id="docConfigGrid"></div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">📋 Lead Document Tracker</div>
+          <div style="display:flex;gap:8px;">
+            <select id="docFilterProduct" style="width:155px;font-size:12px;" onchange="renderDocTracker()">
+              <option value="">All Products</option>
+              <option value="credit_card">💳 Credit Card</option>
+              <option value="loan">🏦 Loans</option>
+              <option value="partner">🤝 Become Partner</option>
+              <option value="mutual_fund">📈 Mutual Fund</option>
+            </select>
+            <select id="docFilterMember" style="width:140px;font-size:12px;" onchange="renderDocTracker()"></select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table><thead id="docTrackerHead"></thead><tbody id="docTrackerBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== IMPORT REPORT ===== -->
+    <div id="page-importreport" class="page">
+
+      <!-- Summary stat cards -->
+      <div class="grid-4" id="irStats"></div>
+
+      <!-- Filters -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:16px;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text3);display:block;margin-bottom:5px;">MEMBER</label>
+            <select id="irFilterMember" style="width:160px;" onchange="renderImportReport()">
+              <option value="">All Members</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text3);display:block;margin-bottom:5px;">PRODUCT</label>
+            <select id="irFilterProduct" style="width:160px;" onchange="renderImportReport()">
+              <option value="">All Products</option>
+              <option value="credit_card">💳 Credit Card</option>
+              <option value="loan">🏦 Loans</option>
+              <option value="partner">🤝 Become Partner</option>
+              <option value="mutual_fund">📈 Mutual Fund</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text3);display:block;margin-bottom:5px;">STATUS</label>
+            <select id="irFilterStatus" style="width:160px;" onchange="renderImportReport()">
+              <option value="">All Status</option>
+              <option value="pending">⏳ Pending (Not Called)</option>
+              <option value="new">🆕 New</option>
+              <option value="called">📞 Called</option>
+              <option value="interested">✅ Interested</option>
+              <option value="not_interested">❌ Not Interested</option>
+              <option value="follow_up">🔁 Follow Up</option>
+              <option value="converted">🎯 Converted</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text3);display:block;margin-bottom:5px;">DATE</label>
+            <select id="irFilterDate" style="width:140px;" onchange="renderImportReport()">
+              <option value="all">All Time</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-end;">
+            <button class="btn btn-ghost" onclick="irClearFilters()" style="height:38px;">✕ Clear</button>
+            <button class="btn btn-ghost" onclick="exportImportReport()" style="height:38px;">📥 Export Excel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Member-wise progress cards -->
+      <div id="irMemberCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:20px;"></div>
+
+      <!-- Detail table -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">📋 Lead-wise Work Status <span id="irLeadCount" style="color:var(--text3);font-weight:400;font-size:13px;"></span></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Product</th>
+                <th>Assigned To</th>
+                <th>Current Status</th>
+                <th>Kaam Hua?</th>
+                <th>Follow-up</th>
+                <th>Import Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="irLeadBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+// ===================== STATE =====================
+let state = {
+  members: [
+    {id:1,name:'Sajna',role:'Telecaller',joinDate:'2024-01-01',color:'#00d4ff'},
+    {id:2,name:'Alia',role:'Telecaller',joinDate:'2024-01-01',color:'#7c3aed'},
+    {id:3,name:'Neeraj',role:'Senior Executive',joinDate:'2024-01-01',color:'#10b981'},
+    {id:4,name:'Harshita',role:'Telecaller',joinDate:'2024-01-01',color:'#f59e0b'},
+    {id:5,name:'Mahima',role:'Executive',joinDate:'2024-01-01',color:'#ef4444'},
+    {id:6,name:'Soniya',role:'Telecaller',joinDate:'2024-01-01',color:'#ec4899'},
+  ],
+  leads: [],
+  nextLeadId: 1,
+  nextMemberId: 7,
+};
+
+const COLORS = ['#00d4ff','#7c3aed','#10b981','#f59e0b','#ef4444','#ec4899','#06b6d4','#8b5cf6'];
+
+const PRODUCTS = {
+  credit_card: {label:'Credit Card', icon:'💳', cls:'tag-cc'},
+  loan:        {label:'Loans', icon:'🏦', cls:'tag-loan'},
+  partner:     {label:'Become Partner', icon:'🤝', cls:'tag-partner'},
+  mutual_fund: {label:'MF Distributor', icon:'📈', cls:'tag-mf'},
+};
+
+const STATUS_CONFIG = {
+  pending:      {label:'Pending',      badge:'badge-orange', icon:'⏳'},
+  new:          {label:'New',          badge:'badge-blue',   icon:'🆕'},
+  called:       {label:'Called',       badge:'badge-gray',   icon:'📞'},
+  interested:   {label:'Interested',   badge:'badge-green',  icon:'✅'},
+  not_interested:{label:'Not Interested',badge:'badge-red',  icon:'❌'},
+  follow_up:    {label:'Follow Up',    badge:'badge-amber',  icon:'🔁'},
+  converted:    {label:'Converted',    badge:'badge-purple', icon:'🎯'},
+};
+
+// ===================== PERSIST =====================
+function loadState() {
+  try {
+    const s = localStorage.getItem('squarefin_lms');
+    if(s) {
+      const d = JSON.parse(s);
+      state.members    = d.members    || state.members;
+      state.leads      = d.leads      || [];
+      state.nextLeadId = d.nextLeadId || 1;
+      state.nextMemberId = d.nextMemberId || 7;
+    }
+  } catch(e) { console.error('loadState',e); }
+}
+
+function saveState() {
+  try { localStorage.setItem('squarefin_lms', JSON.stringify(state)); } catch(e) {}
+}
+
+// ===================== UTILS =====================
+function today() { return new Date().toISOString().split('T')[0]; }
+function fmtDate(d) {
+  if(!d) return '—';
+  try {
+    // Add time component to avoid UTC→local timezone shift (date appearing 1 day behind)
+    const dateStr = d.length === 10 ? d + 'T00:00:00' : d;
+    return new Date(dateStr).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  }
+  catch(e) { return d; }
+}
+function getMember(name)    { return state.members.find(m => m.name === name) || null; }
+function getMemberById(id)  { return state.members.find(m => m.id   === id)   || null; }
+function avatarHtml(name, color, size=36) {
+  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  return `<div class="avatar" style="width:${size}px;height:${size}px;background:${color||'#00d4ff'};color:#fff;">${initials}</div>`;
+}
+function toast(msg, type='info') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</span> ${msg}`;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ===================== NAVIGATION =====================
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + page);
+  if(pageEl) pageEl.classList.add('active');
+  const titles = {
+    dashboard:'📊 Dashboard', leads:'🎯 Lead Tracker', upload:'📤 Excel Import',
+    team:'👥 Team Members', performance:'📈 Performance',
+    reports:'📋 Daily Report', docs:'📄 Documentation',
+    importreport:'📥 Import Report — Assigned Leads Ka Status'
+  };
+  document.getElementById('pageTitle').innerHTML = titles[page] || page;
+  document.querySelectorAll('.nav-item').forEach(n => {
+    const onclick = n.getAttribute('onclick') || '';
+    if(onclick.includes(`showPage('${page}')`)) n.classList.add('active');
+  });
+  if(page === 'dashboard')     { renderDashboard(); }
+  if(page === 'leads')         { renderLeads(); }
+  if(page === 'team')          { renderTeam(); }
+  if(page === 'performance')   { renderPerformance(); }
+  if(page === 'reports')       { renderReport(); }
+  if(page === 'docs')          { renderDocConfig(); renderDocTracker(); }
+  if(page === 'importreport')  { renderImportReport(); }
+}
+
+// ===================== MODAL =====================
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if(id === 'addLeadModal') {
+    document.getElementById('leadDate').value = today();
+    populateMemberSelects();
+  }
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ===================== MEMBER SELECTS =====================
+function populateMemberSelects() {
+  ['leadAssigned','filterMember','editLeadAssigned'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    const isFilter = id === 'filterMember';
+    const curVal = el.value;
+    el.innerHTML = isFilter ? '<option value="">All Members</option>' : '<option value="">Select Member</option>';
+    state.members.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.name;
+      opt.textContent = m.name;
+      el.appendChild(opt);
+    });
+    if(curVal) el.value = curVal;
+  });
+}
+
+// ===================== LEADS =====================
+function saveLead() {
+  const name     = document.getElementById('leadName').value.trim();
+  const product  = document.getElementById('leadProduct').value;
+  const assigned = document.getElementById('leadAssigned').value;
+  if(!name || !product || !assigned) { toast('Please fill required fields','error'); return; }
+  const lead = {
+    id: state.nextLeadId++,
+    name,
+    phone:    document.getElementById('leadPhone').value.trim(),
+    product,
+    assigned,
+    source:   document.getElementById('leadSource').value,
+    status:   document.getElementById('leadStatus').value || 'pending',
+    date:     document.getElementById('leadDate').value || today(),
+    followup: document.getElementById('leadFollowup').value,
+    notes:    document.getElementById('leadNotes').value.trim(),
+    createdAt: Date.now(),
+  };
+  state.leads.push(lead);
+  saveState();
+  closeModal('addLeadModal');
+  ['leadName','leadPhone','leadNotes','leadFollowup'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('leadProduct').value  = '';
+  document.getElementById('leadAssigned').value = '';
+  document.getElementById('leadStatus').value   = 'pending';
+  toast(`Lead "${name}" added!`, 'success');
+  refreshAll();
+}
+
+function updateLead() {
+  const idx = parseInt(document.getElementById('editLeadIdx').value);
+  if(isNaN(idx) || !state.leads[idx]) return;
+  state.leads[idx] = {
+    ...state.leads[idx],
+    name:     document.getElementById('editLeadName').value.trim(),
+    phone:    document.getElementById('editLeadPhone').value.trim(),
+    product:  document.getElementById('editLeadProduct').value,
+    assigned: document.getElementById('editLeadAssigned').value,
+    status:   document.getElementById('editLeadStatus').value,
+    followup: document.getElementById('editLeadFollowup').value,
+    notes:    document.getElementById('editLeadNotes').value.trim(),
+  };
+  saveState();
+  closeModal('editLeadModal');
+  toast('Lead updated!', 'success');
+  refreshAll();
+}
+
+// Central refresh — always call this after any data change
+function refreshAll() {
+  saveState();
+  updateBadge();
+  renderDashboard();
+  renderLeads();
+}
+
+// ---- Quick filter shortcuts from Dashboard / Lead Tracker buttons ----
+function goToLeadsFilter(type) {
+  // Reset all filters first
+  activeFilters = {search:'', product:'', status:'', member:'', date:'all'};
+  document.getElementById('leadSearch').value    = '';
+  document.getElementById('filterProduct').value = '';
+  document.getElementById('filterMember').value  = '';
+  document.getElementById('filterDate').value    = 'all';
+
+  if(type === 'pending') {
+    activeFilters.status = 'pending';
+    document.getElementById('filterStatus').value = 'pending';
+  } else if(type === 'assigned') {
+    // assigned = leads that have a member assigned (all of them from import)
+    activeFilters.status = '';
+    document.getElementById('filterStatus').value = '';
+  }
+  showPage('leads');
+  // Highlight the active button
+  setTimeout(() => {
+    document.querySelectorAll('#page-leads button[id^="btn"]').forEach(b => {
+      b.style.opacity = '0.6';
+    });
+    const activeBtn = type === 'pending'
+      ? document.getElementById('btnPendingFilter')
+      : document.getElementById('btnAssignedFilter');
+    if(activeBtn) activeBtn.style.opacity = '1';
+  }, 50);
+}
+
+
+let activeFilters = {search:'', product:'', status:'', member:'', date:'all'};
+
+function applyLeadFilters() {
+  activeFilters.search  = (document.getElementById('leadSearch').value  || '').toLowerCase().trim();
+  activeFilters.product = document.getElementById('filterProduct').value || '';
+  activeFilters.status  = document.getElementById('filterStatus').value  || '';
+  activeFilters.member  = document.getElementById('filterMember').value  || '';
+  activeFilters.date    = document.getElementById('filterDate').value    || 'all';
+  renderLeads();
+}
+
+function clearLeadFilters() {
+  activeFilters = {search:'', product:'', status:'', member:'', date:'all'};
+  document.getElementById('leadSearch').value    = '';
+  document.getElementById('filterProduct').value = '';
+  document.getElementById('filterStatus').value  = '';
+  document.getElementById('filterMember').value  = '';
+  document.getElementById('filterDate').value    = 'all';
+  document.querySelectorAll('#page-leads button[id^="btn"]').forEach(b => b.style.opacity = '1');
+  renderLeads();
+}
+
+function getFilteredLeads() {
+  const {search, product, status, member, date} = activeFilters;
+  const now = new Date();
+  const todayStr = today();
+  return state.leads.filter(l => {
+    if(search) {
+      const ok = (l.name||'').toLowerCase().includes(search) ||
+                 (l.phone||'').includes(search) ||
+                 (l.assigned||'').toLowerCase().includes(search);
+      if(!ok) return false;
+    }
+    if(product && l.product  !== product) return false;
+    if(status  && l.status   !== status)  return false;
+    if(member  && l.assigned !== member)  return false;
+    if(date === 'today' && l.date !== todayStr) return false;
+    if(date === 'week')  { const d = new Date(l.date); if((now - d)/86400000 > 7) return false; }
+    if(date === 'month') { const d = new Date(l.date); if(d.getMonth()!==now.getMonth()||d.getFullYear()!==now.getFullYear()) return false; }
+    return true;
+  });
+}
+
+function renderLeads() {
+  // Rebuild member dropdown preserving selection
+  populateMemberSelects();
+
+  // Employee cards
+  const empCards = document.getElementById('employeeLeadCards');
+  if(empCards) {
+    empCards.innerHTML = state.members.map(m => {
+      const ml      = state.leads.filter(l => l.assigned === m.name);
+      const pending  = ml.filter(l => l.status === 'pending').length;
+      const inter    = ml.filter(l => l.status === 'interested').length;
+      const conv     = ml.filter(l => l.status === 'converted').length;
+      const isAct    = activeFilters.member === m.name;
+      return `<div onclick="filterByEmployee('${m.name}')" style="min-width:170px;cursor:pointer;background:var(--card);border:2px solid ${isAct?m.color:'var(--border)'};border-radius:14px;padding:12px 14px;flex-shrink:0;transition:all 0.2s;${isAct?'box-shadow:0 4px 14px '+m.color+'33;':''}">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">${avatarHtml(m.name,m.color,30)}<div><div style="font-size:13px;font-weight:700;white-space:nowrap;">${m.name}</div><div style="font-size:10px;color:var(--text3);">${m.role||'Telecaller'}</div></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+          <div style="background:var(--bg3);border-radius:8px;padding:6px;text-align:center;">
+            <div style="font-size:20px;font-weight:800;color:${m.color};">${ml.length}</div>
+            <div style="font-size:9px;color:var(--text3);font-weight:600;">TOTAL</div>
+          </div>
+          <div style="background:${pending>0?'rgba(234,88,12,0.1)':'var(--bg3)'};border-radius:8px;padding:6px;text-align:center;">
+            <div style="font-size:20px;font-weight:800;color:${pending>0?'#ea580c':'var(--text3)'};">${pending}</div>
+            <div style="font-size:9px;color:var(--text3);font-weight:600;">PENDING</div>
+          </div>
+          <div style="background:rgba(16,185,129,0.08);border-radius:8px;padding:6px;text-align:center;">
+            <div style="font-size:18px;font-weight:800;color:var(--accent3);">${inter}</div>
+            <div style="font-size:9px;color:var(--text3);font-weight:600;">INTERESTED</div>
+          </div>
+          <div style="background:rgba(124,58,237,0.08);border-radius:8px;padding:6px;text-align:center;">
+            <div style="font-size:18px;font-weight:800;color:var(--accent2);">${conv}</div>
+            <div style="font-size:9px;color:var(--text3);font-weight:600;">CONVERTED</div>
+          </div>
+        </div>
+        ${ml.length>0?`<div style="border-top:1px solid var(--border);padding-top:6px;">
+          <div style="font-size:9px;font-weight:700;color:var(--text3);margin-bottom:4px;">RECENT LEADS</div>
+          ${ml.slice(-3).reverse().map(l=>`<div style="display:flex;align-items:center;gap:4px;padding:2px 0;">
+            <span style="font-size:10px;">${PRODUCTS[l.product]?.icon||'•'}</span>
+            <span style="font-size:11px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.name}</span>
+            <span style="font-family:monospace;font-size:10px;color:#0284c7;font-weight:700;">${l.phone||'—'}</span>
+          </div>`).join('')}
+        </div>`:''}
+      </div>`;
+    }).join('') +
+    `<div onclick="clearEmployeeFilter()" style="min-width:70px;cursor:pointer;background:${!activeFilters.member?'var(--bg3)':'var(--card)'};border:2px solid ${!activeFilters.member?'var(--accent)':'var(--border)'};border-radius:14px;padding:12px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:all 0.2s;">
+      <div style="font-size:20px;">👁️</div><div style="font-size:11px;font-weight:700;color:var(--text2);">All</div>
+    </div>`;
+  }
+
+  // Update quick-filter button counts
+  const totalAssigned = state.leads.filter(l => l.assigned && l.assigned !== '').length;
+  const totalPending  = state.leads.filter(l => l.status === 'pending').length;
+  const ltANum = document.getElementById('ltAssignedNum');
+  const ltPNum = document.getElementById('ltPendingNum');
+  if(ltANum) ltANum.textContent = totalAssigned;
+  if(ltPNum) ltPNum.textContent = totalPending;
+
+  // Render filtered table
+  const leads  = getFilteredLeads();
+  const tbody  = document.getElementById('leadsBody');
+  const saChk  = document.getElementById('selectAllLeads');
+  if(saChk) saChk.checked = false;
+  document.getElementById('leadCount').textContent = `(${leads.length} / ${state.leads.length})`;
+  updateBulkBar();
+
+  if(!leads.length) {
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="empty-icon">🎯</div><p>No leads found — change filters or click Clear</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = leads.map((l, i) => {
+    const m       = getMember(l.assigned);
+    const sc      = STATUS_CONFIG[l.status] || STATUS_CONFIG.new;
+    const pc      = PRODUCTS[l.product]    || {icon:'❓', label:l.product||'Unknown', cls:''};
+    const isFT    = l.followup === today();
+    // Use real index from state.leads for safe edit/delete
+    const ri      = state.leads.indexOf(l);
+    const hasPhone = l.phone && l.phone.length >= 8;
+    return `<tr id="ltrow-${ri}" style="${isFT?'background:rgba(245,158,11,0.04)':''}">
+      <td style="padding:8px 6px;"><input type="checkbox" class="lead-chk" data-idx="${ri}" style="width:auto;cursor:pointer;" onchange="onLeadCheck(${ri},this.checked)"></td>
+      <td style="color:var(--text3);font-size:12px;padding:8px 6px;">${i+1}</td>
+      <td style="padding:8px 6px;"><div style="display:flex;align-items:center;gap:8px;">${m?avatarHtml(m.name,m.color,28):'<div style="width:28px;height:28px;border-radius:50%;background:var(--bg3);flex-shrink:0;"></div>'}<div><div style="font-weight:600;font-size:13px;">${l.name}</div>${isFT?'<div style="font-size:10px;color:var(--accent4);">🔁 Follow-up Today</div>':''}</div></div></td>
+      <td style="padding:8px 6px;font-family:monospace;font-size:13px;font-weight:700;color:${hasPhone?'#0284c7':'var(--text3)'};">${l.phone||'—'}</td>
+      <td style="padding:8px 6px;"><span class="product-tag ${pc.cls}">${pc.icon} ${pc.label}</span></td>
+      <td style="padding:8px 6px;"><div style="display:flex;align-items:center;gap:6px;">${m?avatarHtml(m.name,m.color,20):''}<span style="font-size:13px;font-weight:600;">${l.assigned||'—'}</span></div></td>
+      <td style="padding:8px 6px;"><span class="badge ${sc.badge}">${sc.icon} ${sc.label}</span></td>
+      <td style="font-size:12px;color:${isFT?'var(--accent4)':'var(--text3)'};padding:8px 6px;">${fmtDate(l.followup)}</td>
+      <td style="font-size:12px;color:var(--text3);padding:8px 6px;">${fmtDate(l.date)}</td>
+      <td style="padding:8px 6px;"><div style="display:flex;gap:4px;">
+        <button class="btn btn-ghost btn-sm" onclick="editLeadByReal(${ri})">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteLeadByReal(${ri})">🗑️</button>
+        <button class="btn btn-ghost btn-sm" onclick="viewLead(${ri})">👁️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function showPendingOnly() {
+  activeFilters = {search:'', product:'', status:'pending', member:'', date:'all'};
+  document.getElementById('leadSearch').value    = '';
+  document.getElementById('filterProduct').value = '';
+  document.getElementById('filterStatus').value  = 'pending';
+  document.getElementById('filterMember').value  = '';
+  document.getElementById('filterDate').value    = 'all';
+  renderLeads();
+}
+
+function filterByEmployee(name) {
+  activeFilters.member = (activeFilters.member === name) ? '' : name;
+  const el = document.getElementById('filterMember');
+  if(el) el.value = activeFilters.member;
+  renderLeads();
+}
+
+function clearEmployeeFilter() {
+  activeFilters.member = '';
+  const el = document.getElementById('filterMember');
+  if(el) el.value = '';
+  renderLeads();
+}
+
+// ---- Bulk select ----
+function onLeadCheck(idx, checked) {
+  if(state.leads[idx]) state.leads[idx]._selected = checked;
+  updateBulkBar();
+}
+function toggleSelectAllLeads(checked) {
+  const leads = getFilteredLeads();
+  leads.forEach(l => l._selected = checked);
+  document.querySelectorAll('.lead-chk').forEach(chk => chk.checked = checked);
+  updateBulkBar();
+}
+function updateBulkBar() {
+  const selected = state.leads.filter(l => l._selected);
+  const bar = document.getElementById('bulkBar');
+  const cnt = document.getElementById('bulkCount');
+  if(!bar) return;
+  bar.style.display = selected.length > 0 ? 'flex' : 'none';
+  if(cnt) cnt.textContent = selected.length + ' leads selected';
+  const saChk    = document.getElementById('selectAllLeads');
+  const filtered = getFilteredLeads();
+  if(saChk && filtered.length > 0) saChk.checked = filtered.every(l => l._selected);
+}
+function deselectAllLeadRows() {
+  state.leads.forEach(l => l._selected = false);
+  document.querySelectorAll('.lead-chk').forEach(chk => chk.checked = false);
+  const saChk = document.getElementById('selectAllLeads');
+  if(saChk) saChk.checked = false;
+  updateBulkBar();
+}
+function bulkDeleteLeads() {
+  const selected = state.leads.filter(l => l._selected);
+  if(!selected.length) return;
+  if(!confirm('Delete ' + selected.length + ' selected leads? This cannot be undone.')) return;
+  state.leads = state.leads.filter(l => !l._selected);
+  toast(selected.length + ' leads deleted', 'info');
+  refreshAll();
+}
+
+// Edit & Delete using real index
+function editLeadByReal(realIdx) {
+  const l = state.leads[realIdx];
+  if(!l) return;
+  document.getElementById('editLeadIdx').value    = realIdx;
+  document.getElementById('editLeadName').value   = l.name;
+  document.getElementById('editLeadPhone').value  = l.phone || '';
+  document.getElementById('editLeadProduct').value = l.product;
+  document.getElementById('editLeadStatus').value  = l.status;
+  document.getElementById('editLeadFollowup').value= l.followup || '';
+  document.getElementById('editLeadNotes').value   = l.notes || '';
+  populateMemberSelects();
+  setTimeout(() => {
+    document.getElementById('editLeadAssigned').value = l.assigned;
+  }, 30);
+  openModal('editLeadModal');
+}
+
+function deleteLeadByReal(realIdx) {
+  const l = state.leads[realIdx];
+  if(!l) return;
+  if(!confirm(`Delete lead "${l.name}"?`)) return;
+  state.leads.splice(realIdx, 1);
+  toast('Lead deleted', 'info');
+  refreshAll();
+}
+
+function viewLead(idx) {
+  const l  = state.leads[idx];
+  if(!l) return;
+  const m  = getMember(l.assigned);
+  const sc = STATUS_CONFIG[l.status] || STATUS_CONFIG.new;
+  const pc = PRODUCTS[l.product]     || {icon:'', label:l.product||'—', cls:''};
+  const bc = {credit_card:'#0284c7', loan:'#7c3aed', partner:'#10b981', mutual_fund:'#f59e0b'};
+  const color = bc[l.product] || '#94a3b8';
+  document.getElementById('leadDetailBody').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;padding:16px;background:${color}10;border-radius:12px;margin-bottom:16px;">
+      <div style="width:52px;height:52px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:800;flex-shrink:0;">${l.name.charAt(0).toUpperCase()}</div>
+      <div><div style="font-size:18px;font-weight:800;">${l.name}</div><div style="font-family:monospace;font-size:14px;font-weight:700;color:${color};">${l.phone||'No phone'}</div></div>
+      <div style="margin-left:auto;"><span class="badge ${sc.badge}">${sc.icon} ${sc.label}</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div style="background:var(--bg3);border-radius:10px;padding:12px;"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px;">PRODUCT</div><div style="font-size:14px;font-weight:700;">${pc.icon} ${pc.label}</div></div>
+      <div style="background:var(--bg3);border-radius:10px;padding:12px;"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px;">ASSIGNED TO</div><div style="display:flex;align-items:center;gap:6px;">${m?avatarHtml(m.name,m.color,22):''}<span style="font-size:14px;font-weight:700;">${l.assigned||'Not assigned'}</span></div></div>
+      <div style="background:var(--bg3);border-radius:10px;padding:12px;"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px;">SOURCE</div><div style="font-size:14px;font-weight:600;">${l.source||'—'}</div></div>
+      <div style="background:var(--bg3);border-radius:10px;padding:12px;"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px;">LEAD DATE</div><div style="font-size:14px;font-weight:600;">${fmtDate(l.date)}</div></div>
+      ${l.followup?`<div style="background:rgba(245,158,11,0.1);border-radius:10px;padding:12px;border:1px solid rgba(245,158,11,0.3);"><div style="font-size:10px;font-weight:700;color:var(--accent4);margin-bottom:4px;">FOLLOW-UP DATE</div><div style="font-size:14px;font-weight:700;color:var(--accent4);">${fmtDate(l.followup)}</div></div>`:''}
+    </div>
+    ${l.notes?`<div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:16px;"><div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:6px;">NOTES</div><div style="font-size:13px;line-height:1.6;">${l.notes}</div></div>`:''}
+    <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--border);">
+      <button class="btn btn-ghost" onclick="closeModal('leadDetailModal')">Close</button>
+      <button class="btn btn-ghost" onclick="closeModal('leadDetailModal');editLeadByReal(${idx})">✏️ Edit Lead</button>
+    </div>`;
+  openModal('leadDetailModal');
+}
+
+function updateBadge() {
+  const n = state.leads.filter(l => l.status === 'new' || l.status === 'pending').length;
+  const el = document.getElementById('newLeadBadge');
+  if(el) el.textContent = n > 0 ? n : '';
+}
+
+// ===================== DASHBOARD =====================
+let productChart, statusChart;
+
+function destroyChart(chartObj, canvasId) {
+  if(chartObj) { try { chartObj.destroy(); } catch(e) {} }
+  // Replace canvas to fully reset Chart.js internal state
+  const old = document.getElementById(canvasId);
+  if(!old) return null;
+  const fresh = document.createElement('canvas');
+  fresh.id = canvasId;
+  old.parentNode.replaceChild(fresh, old);
+  return fresh;
+}
+
+function renderDashboard() {
+  const total      = state.leads.length;
+  const todayLeads = state.leads.filter(l => l.date === today()).length;
+  const converted  = state.leads.filter(l => l.status === 'converted').length;
+  const pending    = state.leads.filter(l => l.status === 'pending').length;
+  const interested = state.leads.filter(l => l.status === 'interested').length;
+  const followToday= state.leads.filter(l => l.followup === today() && l.status !== 'converted').length;
+  const convRate   = total ? ((converted/total)*100).toFixed(1) : 0;
+  const callsDone  = state.leads.filter(l => ['called','interested','not_interested','converted'].includes(l.status)).length;
+
+  // Update dashboard quick-filter button counts
+  const assigned = state.leads.filter(l => l.assigned && l.assigned !== '');
+  const dashANum = document.getElementById('dashAssignedNum');
+  const dashACount = document.getElementById('dashAssignedCount');
+  if(dashANum)   dashANum.textContent   = assigned.length;
+  if(dashACount) dashACount.textContent = `${assigned.length} leads assigned to team`;
+
+  const dashPNum = document.getElementById('dashPendingNum');
+  const dashPCount = document.getElementById('dashPendingCount');
+  if(dashPNum)   dashPNum.textContent   = pending;
+  if(dashPCount) dashPCount.textContent = `Call nahi hua abhi tak`;
+
+  document.getElementById('dashStats').innerHTML = `
+    <div class="stat-card blue">
+      <div class="stat-label">Total Leads</div>
+      <div class="stat-value blue">${total}</div>
+      <div class="stat-trend">📞 ${callsDone} calls done</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Today's Leads</div>
+      <div class="stat-value green">${todayLeads}</div>
+      <div class="stat-trend">📅 ${fmtDate(today())}</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-label">Converted</div>
+      <div class="stat-value purple">${converted}</div>
+      <div class="stat-trend">📈 ${convRate}% conversion rate</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-label" style="color:#ea580c;">⏳ Pending Calls</div>
+      <div class="stat-value" style="color:#ea580c;">${pending}</div>
+      <div class="stat-trend" style="color:#ea580c;">✅ ${interested} interested · 🔁 ${followToday} follow-ups today</div>
+    </div>`;
+
+  // Product doughnut chart
+  const prodCounts = {};
+  Object.keys(PRODUCTS).forEach(k => prodCounts[k] = 0);
+  state.leads.forEach(l => { if(prodCounts[l.product] !== undefined) prodCounts[l.product]++; });
+  const pCanvas = destroyChart(productChart, 'productChart');
+  if(pCanvas) {
+    productChart = new Chart(pCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: Object.values(PRODUCTS).map(p => p.icon+' '+p.label),
+        datasets: [{ data: Object.keys(PRODUCTS).map(k => prodCounts[k]), backgroundColor:['#0284c7','#7c3aed','#10b981','#f59e0b'], borderWidth:0 }]
+      },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ color:'#475569', font:{size:11} } } } }
+    });
+  }
+
+  // Status bar chart
+  const stOrder  = ['pending','new','called','interested','not_interested','follow_up','converted'];
+  const stColors = {pending:'#ea580c',new:'#0284c7',called:'#94a3b8',interested:'#10b981',not_interested:'#ef4444',follow_up:'#f59e0b',converted:'#7c3aed'};
+  const stCounts = {};
+  stOrder.forEach(k => stCounts[k] = 0);
+  state.leads.forEach(l => { if(stCounts[l.status] !== undefined) stCounts[l.status]++; });
+  const sCanvas = destroyChart(statusChart, 'statusChart');
+  if(sCanvas) {
+    statusChart = new Chart(sCanvas, {
+      type: 'bar',
+      data: {
+        labels: stOrder.map(k => STATUS_CONFIG[k]?.icon+' '+STATUS_CONFIG[k]?.label),
+        datasets: [{ data: stOrder.map(k => stCounts[k]), backgroundColor: stOrder.map(k => stColors[k]), borderRadius:6, borderWidth:0 }]
+      },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{
+        x:{ticks:{color:'#475569',font:{size:10}},grid:{display:false}},
+        y:{ticks:{color:'#475569'},grid:{color:'#e2e8f0'},beginAtZero:true}
+      }}
+    });
+  }
+
+  // Team overview table
+  const tbody = document.getElementById('teamOverviewBody');
+  if(tbody) {
+    tbody.innerHTML = state.members.map(m => {
+      const mLeads = state.leads.filter(l => l.assigned === m.name);
+      const pend   = mLeads.filter(l => l.status === 'pending').length;
+      const calls  = mLeads.filter(l => ['called','interested','not_interested','converted'].includes(l.status)).length;
+      const inter  = mLeads.filter(l => l.status === 'interested').length;
+      const notInt = mLeads.filter(l => l.status === 'not_interested').length;
+      const conv   = mLeads.filter(l => l.status === 'converted').length;
+      const rate   = mLeads.length ? ((conv/mLeads.length)*100).toFixed(1) : 0;
+      const trend  = parseFloat(rate)>=20?'📈 Growth':parseFloat(rate)>=10?'➡️ Stable':'📉 Needs Boost';
+      return `<tr>
+        <td><div style="display:flex;align-items:center;gap:8px;">${avatarHtml(m.name,m.color,30)}<span style="font-weight:600;">${m.name}</span></div></td>
+        <td><strong>${mLeads.length}</strong></td>
+        <td><span style="color:#ea580c;font-weight:700;">${pend}</span>${pend>0?' <span style="font-size:10px;color:#ea580c;">⏳</span>':''}</td>
+        <td>${calls}</td>
+        <td><span style="color:var(--accent3)">${inter}</span></td>
+        <td><span style="color:var(--accent5)">${notInt}</span></td>
+        <td><span style="color:var(--accent2)">${conv}</span></td>
+        <td><div style="display:flex;align-items:center;gap:8px;">
+          <div style="flex:1;min-width:60px;"><div class="progress-bar"><div class="progress-fill" style="width:${Math.min(rate,100)}%;background:${parseFloat(rate)>=20?'var(--accent3)':parseFloat(rate)>=10?'var(--accent)':'var(--accent5)'}"></div></div></div>
+          <span style="font-size:12px;font-weight:700;">${rate}%</span>
+        </div></td>
+        <td style="font-size:12px;">${trend}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Follow-ups
+  const followups = state.leads.filter(l => l.followup === today() && l.status !== 'converted');
+  const fList = document.getElementById('followupList');
+  if(fList) {
+    if(!followups.length) {
+      fList.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><p>No follow-ups for today</p></div>`;
+    } else {
+      fList.innerHTML = followups.map(l => {
+        const m  = getMember(l.assigned);
+        const pc = PRODUCTS[l.product] || {icon:'?', label:l.product, cls:''};
+        return `<div class="metric-row">
+          <div style="display:flex;align-items:center;gap:10px;">
+            ${m?avatarHtml(m.name,m.color,30):''}
+            <div>
+              <div style="font-weight:600;font-size:13px;">${l.name} <span class="product-tag ${pc.cls}" style="margin-left:6px;">${pc.icon} ${pc.label}</span></div>
+              <div style="font-size:12px;color:var(--text3);">Assigned to ${l.assigned} · ${l.phone||'No phone'}</div>
+            </div>
+          </div>
+          <div><span class="badge badge-amber">🔁 Follow-up</span></div>
+        </div>`;
+      }).join('');
+    }
+  }
+  updateBadge();
+}
+
+// ===================== TEAM =====================
+function renderTeam() {
+  const grid = document.getElementById('memberGrid');
+  if(!grid) return;
+  grid.innerHTML = state.members.map(m => {
+    const mLeads = state.leads.filter(l => l.assigned === m.name);
+    const conv   = mLeads.filter(l => l.status === 'converted').length;
+    const rate   = mLeads.length ? ((conv/mLeads.length)*100).toFixed(1) : 0;
+    return `<div class="member-card">
+      ${avatarHtml(m.name, m.color, 48)}
+      <div class="member-info">
+        <div class="member-name" contenteditable="true" onblur="renameMember(${m.id},this.textContent)" style="outline:none;border-bottom:1px dashed transparent;" onfocus="this.style.borderBottomColor='var(--accent)'">${m.name}</div>
+        <div style="font-size:12px;color:var(--accent2);margin-bottom:4px;">${m.role}</div>
+        <div class="member-stats">${mLeads.length} leads · ${conv} converted · ${rate}% rate</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+        <span style="font-size:20px;">${parseFloat(rate)>=20?'🌟':parseFloat(rate)>=10?'📈':'💪'}</span>
+        <button class="btn btn-danger btn-sm" onclick="removeMember(${m.id})">Remove</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openAddMemberModal() {
+  document.getElementById('newMemberDate').value = today();
+  openModal('addMemberModal');
+}
+
+function addMember() {
+  const name = document.getElementById('newMemberName').value.trim();
+  if(!name) { toast('Enter a name','error'); return; }
+  const color = COLORS[state.members.length % COLORS.length];
+  state.members.push({
+    id: state.nextMemberId++, name,
+    role: document.getElementById('newMemberRole').value,
+    joinDate: document.getElementById('newMemberDate').value || today(),
+    color
+  });
+  saveState();
+  closeModal('addMemberModal');
+  document.getElementById('newMemberName').value = '';
+  toast(`${name} added to team!`, 'success');
+  renderTeam();
+  populateMemberSelects();
+}
+
+function removeMember(id) {
+  const m = getMemberById(id);
+  if(!m) return;
+  if(!confirm(`Remove ${m.name} from team?`)) return;
+  state.members = state.members.filter(x => x.id !== id);
+  saveState();
+  toast(`${m.name} removed`, 'info');
+  renderTeam();
+  populateMemberSelects();
+}
+
+function renameMember(id, newName) {
+  newName = newName.trim();
+  if(!newName) return;
+  const m = getMemberById(id);
+  if(!m) return;
+  const old = m.name;
+  m.name = newName;
+  state.leads.forEach(l => { if(l.assigned === old) l.assigned = newName; });
+  saveState();
+  toast(`Renamed to ${newName}`, 'success');
+  renderTeam();
+}
+
+// ===================== PERFORMANCE =====================
+let productPerfChart, trendChartObj;
+
+function renderPerformance() {
+  const cards = document.getElementById('memberPerfCards');
+  if(cards) {
+    cards.innerHTML = state.members.map(m => {
+      const mLeads = state.leads.filter(l => l.assigned === m.name);
+      const calls  = mLeads.filter(l => ['called','interested','not_interested','converted'].includes(l.status)).length;
+      const inter  = mLeads.filter(l => l.status === 'interested').length;
+      const notInt = mLeads.filter(l => l.status === 'not_interested').length;
+      const conv   = mLeads.filter(l => l.status === 'converted').length;
+      const rate   = mLeads.length ? ((conv/mLeads.length)*100).toFixed(1) : 0;
+      const isTrending = parseFloat(rate) >= 20;
+      return `<div class="panel" style="margin-bottom:0;">
+        <div class="panel-header" style="background:linear-gradient(135deg,${m.color}15,transparent);">
+          <div class="panel-title">${avatarHtml(m.name,m.color,32)} ${m.name}</div>
+          <span class="badge ${isTrending?'badge-green':'badge-amber'}">${isTrending?'📈 Growth':'➡️ Steady'}</span>
+        </div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+            <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:24px;font-weight:800;color:${m.color};">${mLeads.length}</div><div style="font-size:11px;color:var(--text3);">Total Leads</div></div>
+            <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:24px;font-weight:800;color:var(--accent3);">${rate}%</div><div style="font-size:11px;color:var(--text3);">Conversion</div></div>
+          </div>
+          <div class="metric-row"><span style="font-size:13px;">📞 Calls Done</span><strong>${calls}</strong></div>
+          <div class="metric-row"><span style="font-size:13px;">✅ Interested</span><span style="color:var(--accent3);font-weight:700;">${inter}</span></div>
+          <div class="metric-row"><span style="font-size:13px;">❌ Not Interested</span><span style="color:var(--accent5);font-weight:700;">${notInt}</span></div>
+          <div class="metric-row"><span style="font-size:13px;">🎯 Converted</span><span style="color:var(--accent2);font-weight:700;">${conv}</span></div>
+          <div style="margin-top:10px;">
+            <div class="progress-bar" style="height:8px;"><div class="progress-fill" style="width:${Math.min(rate,100)}%;background:${m.color};"></div></div>
+            <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:4px;">${rate}% conversion rate</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  setTimeout(() => {
+    const prodCounts = {};
+    Object.keys(PRODUCTS).forEach(k => prodCounts[k] = 0);
+    state.leads.forEach(l => { if(prodCounts[l.product] !== undefined) prodCounts[l.product]++; });
+    const ppCanvas = destroyChart(productPerfChart, 'productPerfChart');
+    if(ppCanvas) {
+      productPerfChart = new Chart(ppCanvas, {
+        type:'bar',
+        data:{ labels:Object.values(PRODUCTS).map(p=>p.icon+' '+p.label), datasets:[{ data:Object.keys(PRODUCTS).map(k=>prodCounts[k]), backgroundColor:['#00d4ff','#7c3aed','#10b981','#f59e0b'], borderRadius:8, borderWidth:0 }] },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{ticks:{color:'#475569',font:{size:11}},grid:{display:false}},y:{ticks:{color:'#475569'},grid:{color:'#e2e8f0'}}} }
+      });
+    }
+
+    const convList = document.getElementById('productConvList');
+    if(convList) {
+      convList.innerHTML = Object.entries(PRODUCTS).map(([k,p]) => {
+        const total = state.leads.filter(l => l.product === k).length;
+        const conv  = state.leads.filter(l => l.product === k && l.status === 'converted').length;
+        const rate  = total ? ((conv/total)*100).toFixed(1) : 0;
+        return `<div class="metric-row">
+          <div><span class="product-tag ${p.cls}">${p.icon} ${p.label}</span></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:12px;color:var(--text3);">${conv}/${total}</span>
+            <span style="font-weight:700;color:var(--accent3);">${rate}%</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    const days = Array.from({length:7}, (_,i) => { const d=new Date(); d.setDate(d.getDate()-6+i); return d.toISOString().split('T')[0]; });
+    const dayLabels = days.map(d => new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}));
+    const datasets  = state.members.map(m => ({
+      label: m.name,
+      data:  days.map(d => state.leads.filter(l => l.assigned===m.name && l.date===d).length),
+      borderColor: m.color, backgroundColor: m.color+'33', tension:0.4, fill:false, borderWidth:2, pointRadius:4
+    }));
+    const tcCanvas = destroyChart(trendChartObj, 'trendChart');
+    if(tcCanvas) {
+      trendChartObj = new Chart(tcCanvas, {
+        type:'line', data:{ labels:dayLabels, datasets },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:'#475569', font:{size:11} } } }, scales:{ x:{ticks:{color:'#475569'},grid:{color:'#e2e8f0'}}, y:{ticks:{color:'#475569'},grid:{color:'#e2e8f0'}} } }
+      });
+    }
+  }, 100);
+}
+
+function showPerfTab(tab) {
+  ['individual','product','trend'].forEach(t => { document.getElementById('perf-'+t).style.display = 'none'; });
+  document.getElementById('perf-'+tab).style.display = 'block';
+  document.querySelectorAll('#perfTabs .tab').forEach(t => t.classList.remove('active'));
+  const idx = ['individual','product','trend'].indexOf(tab);
+  document.querySelectorAll('#perfTabs .tab')[idx].classList.add('active');
+  if(tab !== 'individual') renderPerformance();
+}
+
+// ===================== REPORT =====================
+function renderReport() {
+  const date     = document.getElementById('reportDate').value || today();
+  const leads    = state.leads.filter(l => l.date === date);
+  const total    = leads.length;
+  const converted= leads.filter(l => l.status === 'converted').length;
+  const interested=leads.filter(l => l.status === 'interested').length;
+  const notInt   = leads.filter(l => l.status === 'not_interested').length;
+  const rate     = total ? ((converted/total)*100).toFixed(1) : 0;
+
+  document.getElementById('reportStats').innerHTML = `
+    <div class="stat-card blue"><div class="stat-label">Total Leads</div><div class="stat-value blue">${total}</div></div>
+    <div class="stat-card green"><div class="stat-label">Interested</div><div class="stat-value green">${interested}</div></div>
+    <div class="stat-card red"><div class="stat-label">Not Interested</div><div class="stat-value red">${notInt}</div></div>
+    <div class="stat-card purple"><div class="stat-label">Converted</div><div class="stat-value purple">${converted} <span style="font-size:14px;color:var(--text3)">(${rate}%)</span></div></div>`;
+
+  const reportBody = document.getElementById('reportBody');
+  const prodBreakdown = Object.entries(PRODUCTS).map(([k,p]) => {
+    const pLeads = leads.filter(l => l.product === k);
+    if(!pLeads.length) return '';
+    const inter = pLeads.filter(l => l.status === 'interested').length;
+    const ni    = pLeads.filter(l => l.status === 'not_interested').length;
+    const conv  = pLeads.filter(l => l.status === 'converted').length;
+    const rate  = pLeads.length ? ((conv/pLeads.length)*100).toFixed(1) : 0;
+    return `<div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span class="product-tag ${p.cls}" style="font-size:13px;padding:5px 12px;">${p.icon} ${p.label}</span>
+        <span style="font-size:13px;font-weight:700;">${pLeads.length} leads</span>
+      </div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;">
+        <span style="font-size:12px;">📞 Calls: <strong>${pLeads.filter(l=>['called','interested','not_interested','converted'].includes(l.status)).length}</strong></span>
+        <span style="font-size:12px;color:var(--accent3);">✅ Interested: <strong>${inter}</strong></span>
+        <span style="font-size:12px;color:var(--accent5);">❌ Not Interested: <strong>${ni}</strong></span>
+        <span style="font-size:12px;color:var(--accent2);">🎯 Converted: <strong>${conv}</strong></span>
+        <span style="font-size:12px;color:var(--accent4);">📊 Rate: <strong>${rate}%</strong></span>
+      </div>
+    </div>`;
+  }).join('');
+  if(reportBody) reportBody.innerHTML = prodBreakdown || `<div class="empty-state"><div class="empty-icon">📋</div><p>No leads for ${fmtDate(date)}</p></div>`;
+
+  const tbody = document.getElementById('reportMemberBody');
+  if(tbody) {
+    tbody.innerHTML = state.members.map(m => {
+      const mLeads = leads.filter(l => l.assigned === m.name);
+      const calls  = mLeads.filter(l => ['called','interested','not_interested','converted'].includes(l.status)).length;
+      const inter  = mLeads.filter(l => l.status === 'interested').length;
+      const ni     = mLeads.filter(l => l.status === 'not_interested').length;
+      const fu     = mLeads.filter(l => l.status === 'follow_up').length;
+      const conv   = mLeads.filter(l => l.status === 'converted').length;
+      const rate   = mLeads.length ? ((conv/mLeads.length)*100).toFixed(1) : 0;
+      return `<tr>
+        <td><div style="display:flex;align-items:center;gap:8px;">${avatarHtml(m.name,m.color,28)}<strong>${m.name}</strong></div></td>
+        <td>${mLeads.length}</td><td>${calls}</td>
+        <td style="color:var(--accent3);">${inter}</td>
+        <td style="color:var(--accent5);">${ni}</td>
+        <td style="color:var(--accent4);">${fu}</td>
+        <td style="color:var(--accent2);">${conv}</td>
+        <td><strong style="color:${parseFloat(rate)>=20?'var(--accent3)':parseFloat(rate)>=10?'var(--accent)':'var(--accent5)'};">${rate}%</strong></td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+// ===================== EXCEL IMPORT =====================
+let importData   = [];
+let pendingLeads = [];
+let rawCols      = [];
+
+function cellVal(v) {
+  if(v === null || v === undefined) return '';
+  if(typeof v === 'number') return String(Math.round(v));
+  return String(v).trim();
+}
+function cleanPhone(v) {
+  let s = cellVal(v).replace(/\D/g,'');
+  if(s.length === 12 && s.startsWith('91')) s = s.slice(2);
+  if(s.length === 11 && s.startsWith('0'))  s = s.slice(1);
+  return s.length === 10 ? s : '';
+}
+function scanPhone(row) {
+  for(const k of Object.keys(row)) { const p = cleanPhone(row[k]); if(p) return p; }
+  return '';
+}
+
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const wb   = XLSX.read(e.target.result, {type:'binary'});
+      const ws   = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, {defval:'', raw:true});
+      if(!data.length) { toast('File empty','error'); return; }
+      importData = data;
+      rawCols    = Object.keys(data[0]);
+      showUpStep2(file.name, data);
+    } catch(err) { toast('Error: '+err.message,'error'); }
+  };
+  reader.readAsBinaryString(file);
+}
+
+function showUpStep2(fname, data) {
+  function guess(hints) {
+    return rawCols.find(c => hints.some(h => c.toLowerCase().replace(/[\s_\-\.]/g,'').includes(h))) || '';
+  }
+  const gName  = guess(['name','customer','custname','applicant','client','fullname','cname','cust']);
+  const gPhone = guess(['phone','mobile','mob','contact','number','whatsapp','cell','ph','mo','num']);
+  const mkOpts = (sel) => '<option value="">— Select column —</option>' +
+    rawCols.map(c => `<option value="${c}"${c===sel?' selected':''}>${c}</option>`).join('');
+  document.getElementById('up_name').innerHTML  = mkOpts(gName);
+  document.getElementById('up_phone').innerHTML = mkOpts(gPhone);
+  renderUpPreview();
+  document.getElementById('up_name').onchange  = renderUpPreview;
+  document.getElementById('up_phone').onchange = renderUpPreview;
+  document.getElementById('upFileName').textContent = '📁 '+fname;
+  document.getElementById('upRowCount').textContent  = data.length+' rows found';
+  document.getElementById('upStep1').style.display = 'none';
+  document.getElementById('upStep2').style.display = 'block';
+}
+
+function renderUpPreview() {
+  const nc  = document.getElementById('up_name')?.value  || '';
+  const pc  = document.getElementById('up_phone')?.value || '';
+  const tbl = document.getElementById('upPreview');
+  if(!tbl || !importData.length) return;
+  const cols = [];
+  if(nc) cols.push({label:'Customer Name', key:nc});
+  if(pc) cols.push({label:'Phone / Mobile', key:pc});
+  if(!cols.length) { tbl.innerHTML='<tr><td style="padding:12px;color:var(--text3);">Select columns above to preview</td></tr>'; return; }
+  const hdr  = cols.map(c=>`<th style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);font-size:12px;">${c.label}</th>`).join('');
+  const rows = importData.slice(0,5).map(row =>
+    `<tr>${cols.map(c => {
+      const raw  = row[c.key];
+      const val  = c.key===pc ? (cleanPhone(raw)||cellVal(raw)) : cellVal(raw);
+      const color= c.key===pc ? (cleanPhone(raw)?'color:#0284c7;font-family:monospace;font-weight:700;':'color:var(--accent5);') : 'font-weight:600;';
+      return `<td style="padding:6px 12px;border:1px solid var(--border);font-size:13px;${color}">${val||'—'}</td>`;
+    }).join('')}</tr>`
+  ).join('');
+  tbl.innerHTML = `<thead><tr>${hdr}</tr></thead><tbody>${rows}</tbody>`;
+}
+
+function loadPendingLeads() {
+  const nameCol  = document.getElementById('up_name').value;
+  const phoneCol = document.getElementById('up_phone').value;
+  if(!nameCol)  { toast('Name column select karo','error');  return; }
+  if(!phoneCol) { toast('Phone column select karo','error'); return; }
+  pendingLeads = importData.map((row,i) => ({
+    _row:     row,
+    name:     cellVal(row[nameCol]) || ('Lead '+(i+1)),
+    phone:    cleanPhone(row[phoneCol]) || scanPhone(row),
+    source:   'Social Media',
+    date:     today(),
+    notes:    '',
+    product:  '',
+    assigned: '',
+    selected: false,
+  }));
+  // Populate bulk member dropdown
+  const bm = document.getElementById('upBulkMem');
+  bm.innerHTML = '<option value="">Select Member</option>';
+  state.members.forEach(m => bm.innerHTML += `<option value="${m.name}">${m.name}</option>`);
+  document.getElementById('upStep3Count').textContent = pendingLeads.length+' leads loaded';
+  document.getElementById('upStep2').style.display = 'none';
+  document.getElementById('upStep3').style.display = 'block';
+  renderUpBuckets(); renderUpTable(); renderUpMemberSummary();
+  const miss = pendingLeads.filter(l => !l.phone).length;
+  if(miss) toast(miss+' leads mein phone nahi mila','info');
+  else     toast('Sab phone numbers mil gaye ✅','success');
+}
+
+function goToUpStep2() {
+  document.getElementById('upStep3').style.display = 'none';
+  document.getElementById('upStep2').style.display = 'block';
+}
+
+function renderUpBuckets() {
+  const el = document.getElementById('upBuckets');
+  if(!el) return;
+  const bc = {credit_card:'#0284c7',loan:'#7c3aed',partner:'#10b981',mutual_fund:'#f59e0b'};
+  el.innerHTML = Object.entries(PRODUCTS).map(([k,p]) => {
+    const n = pendingLeads.filter(l => l.product === k).length;
+    return `<div style="background:var(--card);border:2px solid ${n?bc[k]:'var(--border)'};border-radius:14px;padding:14px;text-align:center;">
+      <div style="font-size:22px;">${p.icon}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin:4px 0;">${p.label}</div>
+      <div style="font-size:28px;font-weight:800;color:${n?bc[k]:'var(--text3)'};">${n}</div>
+      <div style="font-size:10px;color:var(--text3);">leads</div>
+    </div>`;
+  }).join('');
+  const un  = pendingLeads.filter(l => !l.product).length;
+  const uel = document.getElementById('upUnassigned');
+  if(uel) uel.textContent = un ? ('⚠️ '+un+' without product') : '✅ All assigned';
+}
+
+function renderUpTable() {
+  const tbody = document.getElementById('upTableBody');
+  if(!tbody) return;
+  tbody.innerHTML = pendingLeads.map((l,i) => {
+    const ok = !!l.phone;
+    return `<tr id="urow-${i}" style="background:${!l.product?'rgba(245,158,11,0.05)':''}">
+      <td style="padding:8px 6px;"><input type="checkbox" style="width:auto;" ${l.selected?'checked':''} onchange="upToggleRow(${i},this.checked)"></td>
+      <td style="font-size:12px;color:var(--text3);padding:6px;">${i+1}</td>
+      <td style="padding:6px;font-weight:700;font-size:13px;">${l.name}</td>
+      <td style="padding:6px;font-family:monospace;font-size:13px;font-weight:700;color:${ok?'#0284c7':'var(--accent5)'};">
+        ${ok ? l.phone : '<span style="font-size:11px;">❌ not found</span>'}
+      </td>
+      <td style="padding:6px;">
+        <select style="width:152px;font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid ${!l.product?'var(--accent4)':'var(--border)'};" onchange="upSetProd(${i},this.value)">
+          <option value="">— Product —</option>
+          <option value="credit_card" ${l.product==='credit_card'?'selected':''}>💳 Credit Card</option>
+          <option value="loan"        ${l.product==='loan'?'selected':''}>🏦 Loans</option>
+          <option value="partner"     ${l.product==='partner'?'selected':''}>🤝 Become Partner</option>
+          <option value="mutual_fund" ${l.product==='mutual_fund'?'selected':''}>📈 Mutual Fund</option>
+        </select>
+      </td>
+      <td style="padding:6px;">
+        <select style="width:130px;font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);" onchange="upSetMem(${i},this.value)">
+          <option value="">— Member —</option>
+          ${state.members.map(m=>`<option value="${m.name}" ${l.assigned===m.name?'selected':''}>${m.name}</option>`).join('')}
+        </select>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderUpMemberSummary() {
+  const el = document.getElementById('upMemberSummary');
+  if(!el) return;
+  const bc = {credit_card:'#0284c7',loan:'#7c3aed',partner:'#10b981',mutual_fund:'#f59e0b'};
+  el.innerHTML = state.members.map(m => {
+    const asgn = pendingLeads.filter(l => l.assigned === m.name);
+    const bp   = {};
+    Object.keys(PRODUCTS).forEach(k => bp[k] = 0);
+    asgn.forEach(l => { if(PRODUCTS[l.product]) bp[l.product]++; });
+    return `<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${asgn.length?m.color:'var(--border)'};border-radius:12px;padding:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        ${avatarHtml(m.name,m.color,28)}
+        <div><div style="font-size:13px;font-weight:700;">${m.name}</div>
+             <div style="font-size:11px;color:var(--text3);">${asgn.length} leads</div></div>
+      </div>
+      ${asgn.length?`
+        <div style="margin-bottom:6px;">
+          ${Object.entries(PRODUCTS).map(([k,p])=>bp[k]?`<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 6px;background:${bc[k]}15;border-radius:4px;margin-bottom:2px;"><span>${p.icon} ${p.label}</span><strong style="color:${bc[k]};">${bp[k]}</strong></div>`:'').join('')}
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:6px;">
+          ${asgn.slice(0,5).map(l=>`<div style="display:flex;gap:4px;padding:2px 0;border-bottom:1px solid var(--border);align-items:center;">
+            <span>${PRODUCTS[l.product]?.icon||'•'}</span>
+            <span style="flex:1;font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.name}</span>
+            <span style="font-family:monospace;font-size:10px;color:var(--text3);">${l.phone||'—'}</span>
+          </div>`).join('')}
+          ${asgn.length>5?`<div style="font-size:10px;color:var(--text3);padding-top:2px;">+${asgn.length-5} more</div>`:''}
+        </div>`
+      :`<div style="font-size:11px;color:var(--text3);text-align:center;padding:6px;">Not assigned yet</div>`}
+    </div>`;
+  }).join('');
+}
+
+function upSetProd(i, v) { pendingLeads[i].product=v; const r=document.getElementById('urow-'+i); if(r)r.style.background=v?'':'rgba(245,158,11,0.05)'; renderUpBuckets(); renderUpMemberSummary(); }
+function upSetMem(i, v)  { pendingLeads[i].assigned=v; renderUpMemberSummary(); }
+function upToggleRow(i, c){ pendingLeads[i].selected=c; const x=document.getElementById('upChkAll'); if(x) x.checked=pendingLeads.every(l=>l.selected); }
+function upToggleAll(c)   { pendingLeads.forEach(l=>l.selected=c); renderUpTable(); renderUpMemberSummary(); }
+function upSelectAll()    { pendingLeads.forEach(l=>l.selected=true);  document.getElementById('upChkAll').checked=true;  renderUpTable(); }
+function upDeselectAll()  { pendingLeads.forEach(l=>l.selected=false); document.getElementById('upChkAll').checked=false; renderUpTable(); }
+
+function bulkApply() {
+  const prod = document.getElementById('upBulkProd')?.value || '';
+  const mem  = document.getElementById('upBulkMem')?.value  || '';
+  const sel  = pendingLeads.filter(l => l.selected);
+  if(!sel.length)  { toast('Select leads first','error');          return; }
+  if(!prod && !mem){ toast('Select product or member','error');     return; }
+  sel.forEach(l => { if(prod) l.product=prod; if(mem) l.assigned=mem; });
+  toast(sel.length+' leads updated','success');
+  renderUpBuckets(); renderUpTable(); renderUpMemberSummary();
+}
+
+function doImport() {
+  const noProd = pendingLeads.filter(l => !l.product);
+  if(noProd.length && !confirm(noProd.length+' leads ka product nahi hai. Credit Card mein save karein?')) return;
+  noProd.forEach(l => l.product = 'credit_card');
+
+  const newLeads = pendingLeads.map(l => ({
+    id:       state.nextLeadId++,
+    name:     l.name,
+    phone:    l.phone || scanPhone(l._row || {}),
+    product:  l.product || 'credit_card',
+    assigned: l.assigned || '',
+    source:   'Social Media',
+    status:   l.assigned ? 'pending' : 'new',
+    date:     today(),
+    followup: '',
+    notes:    '',
+    createdAt: Date.now(),
+  }));
+
+  newLeads.forEach(l => state.leads.push(l));
+
+  // Reset import state
+  importData   = [];
+  pendingLeads = [];
+  rawCols      = [];
+  ['upStep2','upStep3'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+  const s1 = document.getElementById('upStep1'); if(s1) s1.style.display='block';
+  const fi = document.getElementById('fileInput'); if(fi) fi.value='';
+
+  // Reset lead filters — ensure ALL filters clear so imported leads are visible
+  activeFilters = {search:'', product:'', status:'', member:'', date:'all'};
+  ['leadSearch','filterProduct','filterStatus','filterMember'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
+  const fd = document.getElementById('filterDate'); if(fd) fd.value='all';
+
+  // Save and refresh EVERYTHING
+  saveState();
+  refreshAll();
+
+  toast('✅ '+newLeads.length+' leads imported! Pending mein dekho.','success');
+  // Navigate to leads page with pending filter
+  setTimeout(() => {
+    goToLeadsFilter('pending');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }, 600);
+}
+
+function resetUpload() {
+  importData = []; pendingLeads = []; rawCols = [];
+  ['upStep2','upStep3'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+  const s1 = document.getElementById('upStep1'); if(s1) s1.style.display='block';
+  const fi = document.getElementById('fileInput'); if(fi) fi.value='';
+}
+
+// Drag & drop
+const uz = document.getElementById('uploadZone');
+if(uz) {
+  uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('dragover'); });
+  uz.addEventListener('dragleave', () => uz.classList.remove('dragover'));
+  uz.addEventListener('drop', e => {
+    e.preventDefault(); uz.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if(f) { document.getElementById('fileInput').files = e.dataTransfer.files; handleFileUpload({target:{files:e.dataTransfer.files}}); }
+  });
+}
+
+// ===================== DOCUMENTATION =====================
+let docConfig = {
+  credit_card:  ['PAN Card','Aadhaar Card','Selfie Photo','Salary Slip / ITR','Bank Statement (3 months)','Email ID','Cancel Cheque'],
+  loan:         ['PAN Card','Aadhaar Card','Address Proof','Income Proof (Salary/ITR)','Bank Statement (6 months)','Property Documents','RC / Registration (Auto/Tractor)','Email ID','Contact Number'],
+  partner:      ['PAN Card','Aadhaar Card','Email ID','Contact Number','Cancel Cheque','Bank Account Proof','Business Proof (if any)','Photo'],
+  mutual_fund:  ['PAN Card','Aadhaar Card','Bank Statement','Cancel Cheque','Email ID','Contact Number','AMFI/ARN Certificate','Photo'],
+};
+
+function loadDocConfig() {
+  try { const s=localStorage.getItem('sf_docconfig'); if(s) docConfig=JSON.parse(s); } catch(e) {}
+}
+function saveDocConfig() {
+  Object.keys(PRODUCTS).forEach(k => {
+    const el = document.getElementById(`doclist_${k}`);
+    if(el) docConfig[k] = el.value.split('\n').map(s=>s.trim()).filter(Boolean);
+  });
+  try { localStorage.setItem('sf_docconfig', JSON.stringify(docConfig)); } catch(e) {}
+  toast('Document configuration saved!','success');
+  renderDocTracker();
+}
+
+function renderDocConfig() {
+  const grid = document.getElementById('docConfigGrid');
+  if(!grid) return;
+  const bc = {credit_card:'#0284c7',loan:'#7c3aed',partner:'#10b981',mutual_fund:'#f59e0b'};
+  grid.innerHTML = Object.entries(PRODUCTS).map(([k,p]) => `
+    <div class="panel" style="margin:0;">
+      <div class="panel-header" style="background:${bc[k]}10;border-bottom:2px solid ${bc[k]}30;">
+        <div class="panel-title">${p.icon} ${p.label}</div>
+        <span style="font-size:11px;color:var(--text3);">one doc per line</span>
+      </div>
+      <div class="panel-body" style="padding:12px;">
+        <textarea id="doclist_${k}" rows="8" style="font-size:12px;line-height:1.8;resize:vertical;">${(docConfig[k]||[]).join('\n')}</textarea>
+      </div>
+    </div>`).join('');
+}
+
+function renderDocTracker() {
+  const mf = document.getElementById('docFilterMember');
+  if(mf) {
+    const cur = mf.value;
+    mf.innerHTML = '<option value="">All Members</option>';
+    state.members.forEach(m => mf.innerHTML += `<option value="${m.name}" ${m.name===cur?'selected':''}>${m.name}</option>`);
+  }
+  const prodF = document.getElementById('docFilterProduct')?.value || '';
+  const memF  = document.getElementById('docFilterMember')?.value  || '';
+  let leads   = state.leads.filter(l => l.status==='interested'||l.status==='converted'||l.status==='pending');
+  if(prodF) leads = leads.filter(l => l.product  === prodF);
+  if(memF)  leads = leads.filter(l => l.assigned === memF);
+  const head = document.getElementById('docTrackerHead');
+  const body = document.getElementById('docTrackerBody');
+  if(!head||!body) return;
+  if(!leads.length) {
+    head.innerHTML=''; body.innerHTML='<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--text3);">No leads to show. Filter by product or member.</td></tr>';
+    return;
+  }
+  const fixedCols = ['#','Customer','Phone','Product','Assigned','Status'];
+  let docItems = [];
+  if(prodF) docItems = docConfig[prodF] || [];
+  else { const seen=new Set(); Object.values(docConfig).forEach(arr=>arr.forEach(d=>seen.add(d))); docItems=[...seen]; }
+  head.innerHTML = `<tr>${fixedCols.map(c=>`<th>${c}</th>`).join('')}${docItems.map(d=>`<th style="white-space:nowrap;font-size:11px;">${d}</th>`).join('')}<th>Docs %</th></tr>`;
+  body.innerHTML = leads.map((l,i) => {
+    const m  = getMember(l.assigned);
+    const sc = STATUS_CONFIG[l.status] || STATUS_CONFIG.new;
+    const pc = PRODUCTS[l.product]     || {icon:'',label:l.product,cls:''};
+    const ri = state.leads.indexOf(l);
+    const docStatus = l.docs || {};
+    const done = docItems.filter(d => docStatus[d]).length;
+    const pct  = docItems.length ? Math.round(done/docItems.length*100) : 0;
+    const pctColor = pct===100?'var(--accent3)':pct>=50?'var(--accent4)':'var(--accent5)';
+    return `<tr>
+      <td style="font-size:12px;color:var(--text3);">${i+1}</td>
+      <td><div style="font-weight:600;font-size:13px;">${l.name}</div></td>
+      <td style="font-family:monospace;font-size:12px;">${l.phone||'—'}</td>
+      <td><span class="product-tag ${pc.cls}">${pc.icon} ${pc.label}</span></td>
+      <td style="font-size:12px;">${l.assigned||'—'}</td>
+      <td><span class="badge ${sc.badge}">${sc.icon} ${sc.label}</span></td>
+      ${docItems.map(d=>`<td style="text-align:center;"><input type="checkbox" ${docStatus[d]?'checked':''} style="width:auto;cursor:pointer;" onchange="toggleDoc(${ri},'${d.replace(/'/g,"\\'")}',this.checked)" title="${d}"></td>`).join('')}
+      <td><div style="display:flex;align-items:center;gap:6px;">
+        <div style="flex:1;min-width:50px;"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${pctColor};"></div></div></div>
+        <span style="font-size:11px;font-weight:700;color:${pctColor};">${pct}%</span>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleDoc(leadIdx, docName, checked) {
+  if(!state.leads[leadIdx].docs) state.leads[leadIdx].docs = {};
+  state.leads[leadIdx].docs[docName] = checked;
+  saveState();
+  renderDocTracker();
+}
+
+// ===================== EXPORT =====================
+function exportLeadsCSV() {
+  const leads = getFilteredLeads();
+  if(!leads.length) { toast('Export karne ke liye koi lead nahi hai','error'); return; }
+  const wsData = [
+    ['#','Customer Name','Phone','Product','Assigned To','Source','Status','Follow-up Date','Lead Date','Notes'],
+    ...leads.map((l,i) => [
+      i+1, l.name||'', l.phone||'',
+      PRODUCTS[l.product]?.label||l.product||'',
+      l.assigned||'', l.source||'',
+      STATUS_CONFIG[l.status]?.label||l.status||'',
+      l.followup||'', l.date||'', l.notes||''
+    ])
+  ];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [5,25,15,20,15,15,15,15,15,30].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws, 'Leads');
+  XLSX.writeFile(wb, `SquareFin_Leads_${today()}.xlsx`);
+  toast('✅ '+leads.length+' leads exported as Excel!','success');
+}
+
+function exportReport() {
+  const date = document.getElementById('reportDate').value || today();
+  const leads = state.leads.filter(l => l.date === date);
+  if(!leads.length) { toast('No data for this date','error'); return; }
+  const headers = ['Name','Phone','Product','Assigned','Status','Follow-up','Notes'];
+  const rows    = leads.map(l => [l.name,l.phone||'',PRODUCTS[l.product]?.label||l.product,l.assigned,STATUS_CONFIG[l.status]?.label||l.status,l.followup||'',l.notes||'']);
+  const csv     = [headers,...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const blob    = new Blob([csv], {type:'text/csv'});
+  const a       = document.createElement('a');
+  a.href        = URL.createObjectURL(blob);
+  a.download    = `squarefin_report_${date}.csv`;
+  a.click();
+  toast('Report exported!','success');
+}
+
+// ===================== IMPORT REPORT =====================
+function irGetLeads() {
+  const memF  = document.getElementById('irFilterMember')?.value  || '';
+  const prodF = document.getElementById('irFilterProduct')?.value || '';
+  const statF = document.getElementById('irFilterStatus')?.value  || '';
+  const dateF = document.getElementById('irFilterDate')?.value    || 'all';
+  const now   = new Date();
+  return state.leads.filter(l => {
+    if(memF  && l.assigned !== memF)  return false;
+    if(prodF && l.product  !== prodF) return false;
+    if(statF && l.status   !== statF) return false;
+    if(dateF === 'today' && l.date !== today()) return false;
+    if(dateF === 'week')  { const d=new Date(l.date+'T00:00:00'); if((now-d)/86400000>7) return false; }
+    if(dateF === 'month') { const d=new Date(l.date+'T00:00:00'); if(d.getMonth()!==now.getMonth()||d.getFullYear()!==now.getFullYear()) return false; }
+    return true;
+  });
+}
+
+function irClearFilters() {
+  ['irFilterMember','irFilterProduct','irFilterStatus'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
+  const df = document.getElementById('irFilterDate'); if(df) df.value='all';
+  renderImportReport();
+}
+
+function renderImportReport() {
+  // Populate member dropdown
+  const mf = document.getElementById('irFilterMember');
+  if(mf) {
+    const cur = mf.value;
+    mf.innerHTML = '<option value="">All Members</option>';
+    state.members.forEach(m => mf.innerHTML += `<option value="${m.name}" ${m.name===cur?'selected':''}>${m.name}</option>`);
+  }
+
+  const allLeads = state.leads;
+  const leads    = irGetLeads();
+
+  // ---- Stat cards ----
+  const total    = allLeads.length;
+  const worked   = allLeads.filter(l => l.status !== 'pending' && l.status !== 'new').length;
+  const pending  = allLeads.filter(l => l.status === 'pending').length;
+  const conv     = allLeads.filter(l => l.status === 'converted').length;
+  const workPct  = total ? Math.round(worked/total*100) : 0;
+
+  document.getElementById('irStats').innerHTML = `
+    <div class="stat-card blue">
+      <div class="stat-label">Total Assigned Leads</div>
+      <div class="stat-value blue">${total}</div>
+      <div class="stat-trend">📊 Saare imported leads</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Kaam Hua (Called+)</div>
+      <div class="stat-value green">${worked}</div>
+      <div class="stat-trend trend-up">✅ ${workPct}% kaam complete</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-label">Abhi Pending</div>
+      <div class="stat-value amber">${pending}</div>
+      <div class="stat-trend trend-down">⏳ Call nahi hua abhi tak</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-label">Converted</div>
+      <div class="stat-value purple">${conv}</div>
+      <div class="stat-trend">🎯 ${total?((conv/total)*100).toFixed(1):0}% conversion</div>
+    </div>`;
+
+  // ---- Member-wise progress cards ----
+  const mcEl = document.getElementById('irMemberCards');
+  if(mcEl) {
+    mcEl.innerHTML = state.members.map(m => {
+      const ml      = allLeads.filter(l => l.assigned === m.name);
+      if(!ml.length) return '';
+      const mPend   = ml.filter(l => l.status==='pending'||l.status==='new').length;
+      const mWorked = ml.filter(l => l.status!=='pending'&&l.status!=='new').length;
+      const mConv   = ml.filter(l => l.status==='converted').length;
+      const mInter  = ml.filter(l => l.status==='interested').length;
+      const mCall   = ml.filter(l => l.status==='called').length;
+      const mNI     = ml.filter(l => l.status==='not_interested').length;
+      const mFU     = ml.filter(l => l.status==='follow_up').length;
+      const pct     = ml.length ? Math.round(mWorked/ml.length*100) : 0;
+      const pctColor= pct===100?'var(--accent3)':pct>=50?'var(--accent4)':'var(--accent5)';
+      return `<div class="panel" style="margin-bottom:0;cursor:pointer;" onclick="irQuickFilter('${m.name}')">
+        <div class="panel-header" style="background:${m.color}12;border-bottom:2px solid ${m.color}30;">
+          <div class="panel-title">${avatarHtml(m.name,m.color,28)} ${m.name}</div>
+          <span style="font-size:22px;font-weight:800;color:${m.color};">${pct}%</span>
+        </div>
+        <div class="panel-body" style="padding:14px;">
+          <div style="margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px;">
+              <span>Kaam Progress</span><span style="font-weight:700;color:${pctColor};">${mWorked}/${ml.length}</span>
+            </div>
+            <div class="progress-bar" style="height:8px;"><div class="progress-fill" style="width:${pct}%;background:${pctColor};"></div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <div style="background:rgba(234,88,12,0.08);border-radius:8px;padding:7px;text-align:center;">
+              <div style="font-size:18px;font-weight:800;color:#ea580c;">${mPend}</div>
+              <div style="font-size:9px;color:var(--text3);font-weight:700;">PENDING</div>
+            </div>
+            <div style="background:rgba(148,163,184,0.1);border-radius:8px;padding:7px;text-align:center;">
+              <div style="font-size:18px;font-weight:800;color:var(--text2);">${mCall}</div>
+              <div style="font-size:9px;color:var(--text3);font-weight:700;">CALLED</div>
+            </div>
+            <div style="background:rgba(16,185,129,0.08);border-radius:8px;padding:7px;text-align:center;">
+              <div style="font-size:18px;font-weight:800;color:var(--accent3);">${mInter}</div>
+              <div style="font-size:9px;color:var(--text3);font-weight:700;">INTERESTED</div>
+            </div>
+            <div style="background:rgba(239,68,68,0.08);border-radius:8px;padding:7px;text-align:center;">
+              <div style="font-size:18px;font-weight:800;color:var(--accent5);">${mNI}</div>
+              <div style="font-size:9px;color:var(--text3);font-weight:700;">NOT INTEREST</div>
+            </div>
+            <div style="background:rgba(245,158,11,0.08);border-radius:8px;padding:7px;text-align:center;">
+              <div style="font-size:18px;font-weight:800;color:var(--accent4);">${mFU}</div>
+              <div style="font-size:9px;color:var(--text3);font-weight:700;">FOLLOW UP</div>
+            </div>
+            <div style="background:rgba(124,58,237,0.08);border-radius:8px;padding:7px;text-align:center;">
+              <div style="font-size:18px;font-weight:800;color:var(--accent2);">${mConv}</div>
+              <div style="font-size:9px;color:var(--text3);font-weight:700;">CONVERTED</div>
+            </div>
+          </div>
+          <div style="margin-top:8px;font-size:11px;color:var(--text3);text-align:center;">Click to filter by this member</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ---- Lead detail table ----
+  document.getElementById('irLeadCount').textContent = `(${leads.length} leads)`;
+  const tbody = document.getElementById('irLeadBody');
+  if(!tbody) return;
+  if(!leads.length) {
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📋</div><p>Koi lead nahi mili — filter change karo</p></div></td></tr>`;
+    return;
+  }
+
+  const workedStatuses = ['called','interested','not_interested','follow_up','converted'];
+  tbody.innerHTML = leads.map((l,i) => {
+    const m   = getMember(l.assigned);
+    const sc  = STATUS_CONFIG[l.status] || STATUS_CONFIG.new;
+    const pc  = PRODUCTS[l.product]     || {icon:'❓',label:l.product||'Unknown',cls:''};
+    const ri  = state.leads.indexOf(l);
+    const did = workedStatuses.includes(l.status);
+    const kaamBadge = did
+      ? `<span style="background:rgba(16,185,129,0.15);color:var(--accent3);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">✅ Kaam Hua</span>`
+      : `<span style="background:rgba(234,88,12,0.12);color:#ea580c;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">⏳ Abhi Baaki</span>`;
+    return `<tr style="background:${!did?'rgba(245,158,11,0.03)':''};">
+      <td style="font-size:12px;color:var(--text3);">${i+1}</td>
+      <td><div style="font-weight:600;font-size:13px;">${l.name}</div></td>
+      <td style="font-family:monospace;font-size:13px;font-weight:700;color:#0284c7;">${l.phone||'—'}</td>
+      <td><span class="product-tag ${pc.cls}">${pc.icon} ${pc.label}</span></td>
+      <td><div style="display:flex;align-items:center;gap:6px;">${m?avatarHtml(m.name,m.color,22):''}<span style="font-size:13px;font-weight:600;">${l.assigned||'—'}</span></div></td>
+      <td><span class="badge ${sc.badge}">${sc.icon} ${sc.label}</span></td>
+      <td>${kaamBadge}</td>
+      <td style="font-size:12px;color:var(--text3);">${fmtDate(l.followup)}</td>
+      <td style="font-size:12px;color:var(--text3);">${fmtDate(l.date)}</td>
+      <td><div style="display:flex;gap:4px;">
+        <button class="btn btn-ghost btn-sm" onclick="editLeadByReal(${ri})">✏️</button>
+        <button class="btn btn-ghost btn-sm" onclick="viewLead(${ri})">👁️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function irQuickFilter(memberName) {
+  const mf = document.getElementById('irFilterMember');
+  if(mf) { mf.value = (mf.value === memberName) ? '' : memberName; }
+  renderImportReport();
+}
+
+function exportImportReport() {
+  const leads = irGetLeads();
+  if(!leads.length) { toast('Export karne ke liye koi lead nahi','error'); return; }
+  const workedStatuses = ['called','interested','not_interested','follow_up','converted'];
+  const wsData = [
+    ['#','Customer Name','Phone','Product','Assigned To','Status','Kaam Hua?','Follow-up Date','Import Date'],
+    ...leads.map((l,i) => [
+      i+1, l.name||'', l.phone||'',
+      PRODUCTS[l.product]?.label||l.product||'',
+      l.assigned||'',
+      STATUS_CONFIG[l.status]?.label||l.status||'',
+      workedStatuses.includes(l.status) ? 'Haan ✅' : 'Nahi ⏳',
+      l.followup||'', l.date||''
+    ])
+  ];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [5,25,15,20,15,15,12,15,15].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws, 'Import Report');
+  XLSX.writeFile(wb, `SquareFin_ImportReport_${today()}.xlsx`);
+  toast('✅ Import Report exported!','success');
+}
+
+// ===================== INIT =====================
+document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-IN',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+document.getElementById('reportDate').value = today();
+
+function addSampleData() {
+  if(state.leads.length > 0) return;
+  const samples = [
+    {name:'Ramesh Kumar',phone:'9876543210',product:'credit_card',assigned:'Sajna',source:'facebook',status:'interested',date:today(),followup:'',notes:'Very interested, call back evening'},
+    {name:'Priya Sharma',phone:'9988776655',product:'loan',assigned:'Alia',source:'instagram',status:'called',date:today(),notes:''},
+    {name:'Suresh Patel',phone:'9123456789',product:'partner',assigned:'Neeraj',source:'google',status:'converted',date:today(),notes:'Partner agreement signed'},
+    {name:'Meena Joshi',phone:'9812345678',product:'mutual_fund',assigned:'Harshita',source:'whatsapp',status:'follow_up',date:today(),followup:today(),notes:'Call tomorrow'},
+    {name:'Deepak Singh',phone:'9654321098',product:'credit_card',assigned:'Mahima',source:'facebook',status:'not_interested',date:today(),notes:'Not eligible'},
+    {name:'Kavita Rao',phone:'9741258963',product:'loan',assigned:'Soniya',source:'instagram',status:'new',date:today(),notes:''},
+    {name:'Vijay Mehta',phone:'9630147852',product:'credit_card',assigned:'Sajna',source:'facebook',status:'pending',date:today(),notes:''},
+    {name:'Anita Verma',phone:'9517536984',product:'partner',assigned:'Neeraj',source:'referral',status:'pending',date:today(),notes:''},
+  ];
+  samples.forEach(s => state.leads.push({...s, id:state.nextLeadId++, createdAt:Date.now()}));
+  saveState();
+}
+
+loadState();
+loadDocConfig();
+addSampleData();
+populateMemberSelects();
+renderDashboard();
+renderLeads();
+updateBadge();
+</script>
+</body>
+</html>
